@@ -4,7 +4,7 @@ const ReservationSideBar =() =>{
             <h2 className="mb-5 text-2xl m-3">200$ per night</h2>
             <div className="h-[50px] mb-6 m-2 pb-3 border border-gray-400 
             rounded-xl">
-                <label className="block font-semibold text-xs p-1">Guests</label>
+                <label className="block font-semibold text-xs p-1">AHAHAHAH</label>
                 <select className="w-full   text-xm flex items-center">
                     <option >1</option>
                     <option >2</option>
