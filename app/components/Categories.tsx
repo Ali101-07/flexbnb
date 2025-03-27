@@ -2,7 +2,7 @@ import Image from "next/image";
 const Categories =() =>{
     return(
         <div className="cursor-pointer pb-6 flex items-center space-x-11">
-            <div className="pb-4 flex flex-col items-center space-y-2 border-b-2 border-gray-500 hover:border-black opacity-50 hover:opacity-100">
+            <div className="pb-4 flex flex-col items-center space-y-2 border-b-2 border-gray-500 hover:border-black opacity-50 hover:opacity-100 z-1">
                 <Image
                 src="/Top_City_Icon.jpg"
                 alt="TopCity-icon"

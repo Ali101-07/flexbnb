@@ -14,9 +14,15 @@ const UserNav =() =>{
         </svg>
         </button>
         {isOpen && (
-            <div className="pl-1 w-[220px] absolute top-10 right-0 bg-black border border-gray-300 rounded-xl shadow-md flex flex-col ">
+            <div className=" pl-1 w-[220px] absolute top-10 right-0 bg-white text-black border border-gray-300 rounded-xl shadow-md flex flex-col hover:bg-gray-100  transition z-2 ">
                 <MenuLink
-                   label='login'
+                   label='Log-In'
+                   onClick={() => console.log('clicked button')}
+
+                />
+                <MenuLink
+                   label='Sign-Up'
+                   onClick={() => console.log('clicked button')}
                 />
             </div>
         )}

@@ -2,15 +2,18 @@
 
 interface MenuLinkProps{
     label:string;
+    onClick: ()=> void;
 }
 
 
 
 const MenuLink: React.FC<MenuLinkProps> =({
-    label
+    label,
+    onClick
 }) =>{
     return(
-        <div className="px-5 py-4 hover:bg-gray-100 transition">
+        <div onClick={onClick}
+         className="px-5 py-4 overflow-visible">
             {label}
         </div>
     )
