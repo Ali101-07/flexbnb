@@ -14,7 +14,7 @@ const LoginModal=() => {
         <Modals
            isOpen={LoginModal.isOpen}
            close={LoginModal.close}
-           label="Login"
+           label="Log-In"
            Content={Content}
         />   
     )

@@ -26,7 +26,7 @@ const Modals:React.FC<ModalsProps> = ({
     },[close]) 
 
     if(!isOpen){
-        return null;
+        //return null;
     }
     return (
         <div className="flex items-center justify-center fixed inset-0 z-50 bg-black/60">
