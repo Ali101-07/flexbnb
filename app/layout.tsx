@@ -24,6 +24,9 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const Content =(
+      <p>hahah</p>
+  )
   return (
     <html lang="en">
       <body
@@ -33,7 +36,6 @@ export default function RootLayout({
         <div className="pt-24">
         {children}
         </div>
-        <Modals/>
       </body>
     </html>
   );
