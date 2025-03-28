@@ -11,7 +11,7 @@ const SignUpModal = () => {
 
     const Content = (
         <>
-            <h2 className="mb-6 text-2xl">Welcome To FlexBnB, Please Log-In</h2>
+            <h2 className="mb-6 text-2xl">Welcome To FlexBnB, Please Sign-Up</h2>
 
             <form className="space-y-4">
                 <input placeholder="Your Email Address" type="email" className="mb-4 px-4 w-full h-[54px] border border-gray-300 rounded-xl" />
