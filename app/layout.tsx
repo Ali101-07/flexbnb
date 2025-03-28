@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "./components/navbar/Navbar";
-import Modals from "./components/Modals/Modals";
+import LoginModal from "./components/Modals/LoginModal";
+import SignUpModal from "./components/Modals/SignUpModal";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -35,7 +36,13 @@ export default function RootLayout({
         <div className="pt-24">
         {children}
         </div>
-         <Modals/>
+         {/* <Modals
+         label="sadsa"
+         Content={Content}
+         isOpen={true}
+         /> */}
+        <LoginModal/>
+        <SignUpModal/>
       </body>
     </html>
   );
