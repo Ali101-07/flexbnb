@@ -1,4 +1,4 @@
-FROM python:3.14.0a6-bullseye
+FROM python:3.12.9-bullseye
 
 WORKDIR /usr/src/flexbnb_backend
 
