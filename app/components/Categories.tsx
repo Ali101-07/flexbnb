@@ -18,7 +18,7 @@ const Categories =() =>{
                 width={20}
                 height={20}
                 />
-                <span className="text-xs font-semibold whitespace-nowrap ">Amazing Views</span>
+                <span className="text-xs font-bold whitespace-nowrap ">Amazing Views</span>
             </div>
             <div className="pb-4 flex flex-col items-center space-y-2 border-b-2 border-gray-500 hover:border-black opacity-50 hover:opacity-100">
                 <Image
