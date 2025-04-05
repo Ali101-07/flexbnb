@@ -1,41 +1,46 @@
+'use client'
+
+import { useEffect, useState } from 'react';
 import PropertyListItem from "./PropertyListItem";
-const properties=[
-  { 
-    id:1,
-    img:"/aliImgFinal.jpeg",
-    name:"propertyimg1",
-    price:"1200$",
-  },
-  {
-    id:2,
-    img:"/BeachFront_Icon.jpg",
-    name:"propertyimg2",
-    price:"1200$",
-  },
-  {
-    id:3,
-    img:"/aliImgFinal.jpeg",
-    name:"propertyimg3",
-    price:"1300$",
-  },
-  {
-    id:4,
-    img:"/aliImgFinal.jpeg",
-    name:"propertyimg4",
-    price:"1200$",
-  }
-]
-  
 
-
+export type PropertyType = {
+  id:string;
+} 
 const PropertyList=() =>{
-  return(
+  const [properties,setProperties]=useState<PropertyType[]>([]);
+  const getProperties= async() =>{
+    const url="http://localhost:8000/api/properties/";
+
+    await fetch (url, {
+      method: 'GET'
+    })
+      .then(response=> response.json())
+      .then((json) =>{
+          console.log('json',json)
+
+          setProperties(json.data)
+      })
+      .catch((error)=>{
+        console.log('error',error)
+      })
+  };
+
+  useEffect(() =>{
+    getProperties()
+  }, []);
+  return (
     <>
-    {properties.map((property) => (
-        <PropertyListItem key={property.id} property={property} />
-      ))}
+        {properties.map((property) => {
+            return (
+                <PropertyListItem 
+                    key={property.id}
+                    property={property}
+                />
+            )
+        })}
     </>
-  )
+   ) 
+
 }
 export default PropertyList;
 

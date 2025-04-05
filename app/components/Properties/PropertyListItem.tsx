@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { PropertyType } from "./PropertyList";
 interface Property {
     id: number;
     img: string;
