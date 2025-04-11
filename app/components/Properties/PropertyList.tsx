@@ -5,6 +5,9 @@ import PropertyListItem from "./PropertyListItem";
 
 export type PropertyType = {
   id:string;
+  title:string;
+  image_url:string;
+  price_per_night:number;
 } 
 const PropertyList=() =>{
   const [properties,setProperties]=useState<PropertyType[]>([]);
