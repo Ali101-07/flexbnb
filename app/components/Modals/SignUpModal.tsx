@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import UseSignUpModal from "@/app/Hooks/UseSignUpModal";
 import CustomButton from "../Forms/CustomButton";
 import apiService from "../services/apiService";
+import { handleLogin } from "@/app/lib/actions";
 
 
 const SignUpModal = () => {
@@ -33,7 +34,8 @@ const SignUpModal = () => {
         const response = await apiService.post('/api/auth/register/',JSON.stringify(formData));
 
         if(response.access){
-            //handle login
+            handleLogin(response.user.pk, response.access, response.refresh);
+            
             SignUpModal.close();
 
             router.push('/')
