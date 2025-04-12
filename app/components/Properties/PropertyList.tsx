@@ -13,11 +13,12 @@ export type PropertyType = {
 const PropertyList=() =>{
   const [properties,setProperties]=useState<PropertyType[]>([]);
   const getProperties= async() =>{
+    const tmpProperties=await apiService.get('/api/properties/');
     
+    setProperties(tmpProperties.data);
   };
 
-  useEffect(() =>{
-    apiService.get('/api/properties/');
+  useEffect(() =>{  
     getProperties()
   }, []);
   return (
