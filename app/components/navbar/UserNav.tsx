@@ -14,7 +14,7 @@ import {
 
 const UserNav = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { user } = useUser(); // Gives you access to current user info
+  const { user } = useUser();
 
   return (
     <div className="cursor-pointer p-2 relative inline-block border border-white rounded-full shadow-md shadow-gray-300 hover:shadow-gray-500 hover:shadow-xl transition-shadow duration-300">
@@ -38,6 +38,19 @@ const UserNav = () => {
               <p className="text-sm font-medium">{user?.fullName}</p>
               <p className="text-xs text-gray-500 truncate">{user?.primaryEmailAddress?.emailAddress}</p>
             </div>
+
+            <div className="p-2 border-b border-gray-200">
+              {/* Clerk Account Settings Button */}
+              <UserButton
+                appearance={{
+                  elements: {
+                    userButtonPopoverCard: "w-full",
+                  }
+                }}
+                afterSignOutUrl="/"
+              />
+            </div>
+
             <LogoutButton />
           </SignedIn>
 
@@ -68,3 +81,4 @@ const UserNav = () => {
 };
 
 export default UserNav;
+

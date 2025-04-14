@@ -58,9 +58,7 @@ export default function RootLayout({
               <SignInButton />
               <SignUpButton />
             </SignedOut>
-            <SignedIn>
-              <UserButton />
-            </SignedIn>
+            
             {/* <SignUpModal/> */}
           </body>
         </html>
