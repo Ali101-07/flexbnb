@@ -4,6 +4,7 @@ import "./globals.css";
 import Navbar from "./components/navbar/Navbar";
 import LoginModal from "./components/Modals/LoginModal";
 import SignUpModal from "./components/Modals/SignUpModal";
+import AddPropertyModal from "./components/Modals/AddPropertyModal";
 // import SignInButton from "./components/Modals/SignInButton";
 import {
   ClerkProvider,
@@ -43,6 +44,7 @@ export default function RootLayout({
             className={`${geistSans.variable} ${geistMono.variable} antialiased`}
           >
             <Navbar/>
+            <AddPropertyModal/>
             <div className="pt-24">
             {children}
             </div>
