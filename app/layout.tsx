@@ -4,6 +4,15 @@ import "./globals.css";
 import Navbar from "./components/navbar/Navbar";
 import LoginModal from "./components/Modals/LoginModal";
 import SignUpModal from "./components/Modals/SignUpModal";
+// import SignInButton from "./components/Modals/SignInButton";
+import {
+  ClerkProvider,
+  SignInButton,
+  SignUpButton,
+  SignedIn,
+  SignedOut,
+  UserButton,
+} from '@clerk/nextjs'
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -28,22 +37,31 @@ export default function RootLayout({
       <p>hahah</p>
   )
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <Navbar/>
-        <div className="pt-24">
-        {children}
-        </div>
-         {/* <Modals
-         label="sadsa"
-         Content={Content}
-         isOpen={true}
-         /> */}
-        <LoginModal/>
-        <SignUpModal/>
-      </body>
-    </html>
+    <ClerkProvider>
+        <html lang="en">
+          <body
+            className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+          >
+            <Navbar/>
+            <div className="pt-24">
+            {children}
+            </div>
+            {/* <Modals
+            label="sadsa"
+            Content={Content}
+            isOpen={true}
+            /> */}
+            {/* <LoginModal/> */}
+            <SignedOut>
+              <SignInButton />
+              <SignUpButton />
+            </SignedOut>
+            <SignedIn>
+              <UserButton />
+            </SignedIn>
+            {/* <SignUpModal/> */}
+          </body>
+        </html>
+    </ClerkProvider>
   );
 }

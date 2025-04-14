@@ -1,24 +1,22 @@
 'use client';
 
-import { useRouter } from "next/navigation";
-
-import {resetAuthCookies} from '../lib/actions';
-
+import { SignOutButton } from "@clerk/nextjs";
 import MenuLink from "./navbar/MenuLink";
 
 const LogoutButton: React.FC = () => {
-    const router = useRouter();
+  return (
+    <SignOutButton signOutCallback={() => window.location.href = '/'}>
+      {/* Clerk will trigger this when clicked */}
+      <MenuLink
+        label="Log-Out"
+        onClick={() => {}}
+      />
+    </SignOutButton>
+  );
+};
 
-    const submitLogout= async()=>{
-        resetAuthCookies();
-        router.push('/')
-    }
-
-    return(
-        <MenuLink 
-            label="Log-Out" 
-            onClick={submitLogout}
-        />
-    )
-}
 export default LogoutButton;
+
+
+
+
