@@ -1,21 +1,26 @@
 'use client';
 
-import { SignOutButton } from "@clerk/nextjs";
+import { SignOutButton, useClerk } from "@clerk/nextjs";
 import MenuLink from "./navbar/MenuLink";
 
 const LogoutButton: React.FC = () => {
+  const { signOut } = useClerk();
+
   return (
-    <SignOutButton signOutCallback={() => window.location.href = '/'}>
-      {/* Clerk will trigger this when clicked */}
-      <MenuLink
-        label="Log-Out"
-        onClick={() => {}}
-      />
-    </SignOutButton>
+    <div
+      onClick={() => {
+        signOut(() => {
+          window.location.href = "/";
+        });
+      }}
+    >
+      <MenuLink label="Log-Out" onClick={() => {}} />
+    </div>
   );
 };
 
 export default LogoutButton;
+
 
 
 

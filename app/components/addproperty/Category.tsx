@@ -59,7 +59,7 @@ const Categories: React.FC<CategoriesProps> = ({
                     className={`pb-4 flex flex-col items-center space-y-2 border-b-2 ${dataCategory == 'Tiny homes' ? 'border-gray-800' : 'border-white'} opacity-60 hover:border-gray-200 hover:opacity-100`}
                 >
                     <Image
-                        src="/aliImgFinal.jpeg"
+                        src="/fypimg-_1_.jpeg"
                         alt="Category - Beach"
                         width={20}
                         height={20}
