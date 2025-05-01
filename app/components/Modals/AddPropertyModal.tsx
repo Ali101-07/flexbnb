@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import UseAddPropertyModal from "@/app/Hooks/UseAddPropertyModal";
 import CustomButton from "../Forms/CustomButton";
 import SelectCountry, { SelectCountryValue } from "../Forms/SelectCountry";
+import { toast } from 'react-toastify';
 
 const AddPropertyModal = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -25,7 +26,7 @@ const AddPropertyModal = () => {
 
   const addPropertyModal = UseAddPropertyModal();
   const router = useRouter();
-  const { getToken } = useAuth(); // ✅ Use hook inside component
+  const { getToken, isSignedIn } = useAuth(); // Use hook inside the component
 
   const setCategory = (category: string) => setDataCategory(category);
 
@@ -36,47 +37,76 @@ const AddPropertyModal = () => {
   };
 
   const submitForm = async () => {
-    console.log('submitForm');
+    if (!isSignedIn) {
+      toast.error('You must be signed in to add a property.');
+      return;
+    }
 
-    if (
-      dataCategory &&
-      dataTitle &&
-      dataDescription &&
-      dataPrice &&
-      dataCountry &&
-      dataImage
-    ) {
-      const formData = new FormData();
-      formData.append('category', dataCategory);
-      formData.append('title', dataTitle);
-      formData.append('description', dataDescription);
-      formData.append('price_per_night', dataPrice);
-      formData.append('bedrooms', dataBedrooms);
-      formData.append('bathrooms', dataBathrooms);
-      formData.append('guests', dataGuests);
-      formData.append('country', dataCountry.label);
-      formData.append('country_code', dataCountry.value);
-      formData.append('image', dataImage);
+    // Validate required fields and types
+    if (!dataCountry || !dataImage) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
 
-    //   try {
-    //     const token = await getToken({ template: 'Integration_flexbnb' }); // ✅ Auth template
-    //     if (token === null) {
-    //       throw new Error('Failed to obtain token');
-    //     }
-        const response = await apiService.postWithoutToken('/api/properties/create/', formData); //token ayai ga form data ke baad
-      
+    const requiredFields = {
+      category: dataCategory,
+      title: dataTitle,
+      description: dataDescription,
+      price: dataPrice,
+      country: dataCountry.label,
+      image: dataImage
+    };
 
-//         if (response.success) {
-//           console.log('SUCCESS :-D');
-//           router.push('/?added=true');
-//           addPropertyModal.close();
-//         } else {
-//           console.log('Error', response);
-//         }
-//       } catch (err) {
-//         console.error('Error submitting form:', err);
-//       }
-   }
+    const missingFields = Object.entries(requiredFields)
+      .filter(([_, value]) => !value)
+      .map(([key]) => key);
+
+    if (missingFields.length > 0) {
+      toast.error(`Please fill in all required fields: ${missingFields.join(', ')}`);
+      return;
+    }
+
+    const token = await getToken({ template: 'Integration_flexbnb' });
+    if (!token) {
+      toast.error('Authentication failed. Please try signing in again.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('category', dataCategory);
+    formData.append('title', dataTitle);
+    formData.append('description', dataDescription);
+    formData.append('price_per_night', dataPrice);
+    formData.append('bedrooms', dataBedrooms);
+    formData.append('bathrooms', dataBathrooms);
+    formData.append('guests', dataGuests);
+    formData.append('country', dataCountry.label);
+    formData.append('country_code', dataCountry.value);
+    formData.append('image', dataImage);
+
+    try {
+      const response = await apiService.post('/api/properties/create/', formData, token);
+      console.log('API Response:', response);
+
+      if (response.success) {
+        toast.success(response.message || 'Property added successfully!');
+        router.refresh(); // Refresh the page to show the new property
+        addPropertyModal.close();
+      } else {
+        if (response.errors && typeof response.errors === 'object') {
+          // Handle form validation errors
+          Object.entries(response.errors).forEach(([field, error]) => {
+            const errorMessage = Array.isArray(error) ? error.join(', ') : error;
+            toast.error(`${field}: ${errorMessage}`);
+          });
+        } else {
+          toast.error(response.message || 'Failed to add property.');
+        }
+      }
+    } catch (err) {
+      console.error('Error submitting form:', err);
+      toast.error('An unexpected error occurred. Please try again.');
+    }
   };
 
   const content = (

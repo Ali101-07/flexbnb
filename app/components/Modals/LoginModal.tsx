@@ -7,6 +7,7 @@ import UseLoginModal from "@/app/Hooks/UseLoginModal";
 import CustomButton from "../Forms/CustomButton";
 import { handleLogin } from "@/app/lib/actions";
 import apiService from "../services/apiService";
+import { useAuth } from "@clerk/nextjs";
 
 
 const LoginModal = () => {
@@ -15,14 +16,16 @@ const LoginModal = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [errors, setErrors] = useState<string[]>([]);
+    const { getToken, isSignedIn } = useAuth(); // Use hook inside the component
 
     const submitLogin= async()=>{
         const formData = {
             email: email,
             password: password
         }
-
-        const response = await apiService.post('/api/auth/login/',JSON.stringify(formData));
+        const token = await getToken({ template: 'Integration_flexbnb' }); // Fetch the token
+        console.log('Token:', token);
+        const response = await apiService.post('/api/auth/login/',JSON.stringify(formData),token);
 
         if(response.access){
             handleLogin(response.user.pk, response.access, response.refresh);
