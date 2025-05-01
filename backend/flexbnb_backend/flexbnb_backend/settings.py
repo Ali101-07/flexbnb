@@ -41,21 +41,47 @@ ACCOUNT_EMAIL_VERIFICATION = None
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-         'rest_framework.authentication.TokenAuthentication',
+        'useraccount.auth.ClerkAuthentication',
         'rest_framework.authentication.SessionAuthentication',
-
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     )
 }
 
+# Clerk Authentication Settings
+CLERK_FRONTEND_API = os.environ.get('NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY', '')
+CLERK_API_KEY = os.environ.get('CLERK_SECRET_KEY', '')
+CLERK_JWT_KEY = os.environ.get('CLERK_JWT_KEY', '')
+CLERK_ISSUER = "https://noted-ghoul-41.clerk.accounts.dev"  # Replace with your Clerk issuer
+
 CORS_ALLOWED_ORIGINS = [
-    'http://127.0.0.1:8000',
+    'http://localhost:3000',
     'http://127.0.0.1:3000',
-]    
-CORS_ALLOW_ALL_ORIGINS = True
+]
+
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+
 REST_AUTH = {
     "USE_JWT": True,
     "JWT_AUTH_HTTPONLY": False

@@ -3,6 +3,7 @@ from django.http import JsonResponse
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser
+from useraccount.auth import ClerkAuthentication
 from .models import Property
 from .forms import PropertyForm
 from .serializers import PropertiesListSerializer
@@ -24,14 +25,21 @@ def properties_list(request):
     })
     
 @api_view(['POST'])
+@authentication_classes([ClerkAuthentication])
 @permission_classes([IsAuthenticated])
 def create_property(request):
     try:
+        if not request.user.is_authenticated:
+            return JsonResponse({
+                'success': False,
+                'message': 'Authentication required',
+            }, status=401)
+
         form = PropertyForm(request.POST, request.FILES)
         
         if form.is_valid():
             property = form.save(commit=False)
-            property.landlord = request.user
+            property.Host = request.user
             property.save()
 
             return JsonResponse({
@@ -49,7 +57,7 @@ def create_property(request):
                     'country_code': property.country_code,
                     'category': property.category,
                     'image_url': property.image.url if property.image else None,
-                    'landlord': property.landlord.id,
+                    'host': property.Host.id,
                     'created_at': property.created_at,
                 }
             }, status=201)
