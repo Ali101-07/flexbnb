@@ -11,6 +11,7 @@ import UseAddPropertyModal from "@/app/Hooks/UseAddPropertyModal";
 import CustomButton from "../Forms/CustomButton";
 import SelectCountry, { SelectCountryValue } from "../Forms/SelectCountry";
 import { toast } from 'react-toastify';
+import PropertyMap from '../Maps/PropertyMap';
 
 const AddPropertyModal = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -23,6 +24,8 @@ const AddPropertyModal = () => {
   const [dataGuests, setDataGuests] = useState("");
   const [dataCountry, setDataCountry] = useState<SelectCountryValue>();
   const [dataImage, setDataImage] = useState<File | null>(null);
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
 
   const addPropertyModal = UseAddPropertyModal();
   const router = useRouter();
@@ -100,6 +103,8 @@ const AddPropertyModal = () => {
       formData.append('country', dataCountry.label);
       formData.append('country_code', dataCountry.value);
       formData.append('image', dataImage);
+      formData.append('latitude', latitude?.toString() || '');
+      formData.append('longitude', longitude?.toString() || '');
 
       console.log('Submitting to API...');
       const response = await apiService.post('/api/properties/create/', formData, token);
@@ -144,7 +149,7 @@ const AddPropertyModal = () => {
   };
 
   const content = (
-    <>
+    <div className="max-h-[80vh] overflow-y-auto">
       {currentStep === 1 ? (
         <>
           <h2 className="mb-6 text-2xl">Choose Category</h2>
@@ -204,6 +209,17 @@ const AddPropertyModal = () => {
           <h2 className="mb-6 text-2xl">Location</h2>
           <div className="pt-3 pb-6 space-y-4">
             <SelectCountry value={dataCountry} onChange={(value) => setDataCountry(value as SelectCountryValue)} />
+            <div className="mt-4">
+              <label className="block mb-2">Pin Location on Map</label>
+              <PropertyMap
+                onLocationSelect={(lat, lng) => {
+                  setLatitude(lat);
+                  setLongitude(lng);
+                }}
+                initialLat={latitude || undefined}
+                initialLng={longitude || undefined}
+              />
+            </div>
           </div>
           <CustomButton label="Previous" className="!mb-2 !bg-black hover:!bg-gray-800" onClick={() => setCurrentStep(3)} />
           <CustomButton label="Next" onClick={() => setCurrentStep(5)} />
@@ -230,7 +246,7 @@ const AddPropertyModal = () => {
           <CustomButton label="Submit" onClick={submitForm} />
         </>
       )}
-    </>
+    </div>
   );
 
   return (

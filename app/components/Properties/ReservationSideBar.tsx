@@ -24,7 +24,7 @@ const ReservationSideBar :React.FC<ReservationSideBarProps> = ({
       </div>
       <div className="cursor-pointer reservebtn  h-[60px] w-[250px]  flex items-center justify-center text-white font-semibold bg-red-500 hover:bg-red-900 rounded-xl">Reserve</div>
       <div className="m-3 mb-4 flex justify-between align-center">
-        <p>{property.price_per_night}$ * 4Nights</p>
+        <p>{property.price_per_night}$ * 4 Nights</p>
         <p>{property.price_per_night * 4}$</p>
       </div>
       <div className="m-3 mb-4 flex justify-between align-center">
