@@ -6,7 +6,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from useraccount.auth import ClerkAuthentication
 from .models import Property
 from .forms import PropertyForm
-from .serializers import PropertiesListSerializer
+from .serializers import PropertiesListSerializer,PropertiesDetailSerializer
 
 CORS_ALLOWED_ORIGINS = [
     'http://127.0.0.1:3000',  # Frontend origin
@@ -23,6 +23,16 @@ def properties_list(request):
     return JsonResponse({
         'data': serializer.data,
     })
+
+@api_view(['GET'])
+@authentication_classes([])
+@permission_classes([])
+def properties_detail(request,pk):
+    property = Property.objects.get(pk=pk)
+    
+    serializer=PropertiesDetailSerializer(property, many=False)
+    
+    return JsonResponse(serializer.data)
     
 @api_view(['POST'])
 @authentication_classes([ClerkAuthentication])

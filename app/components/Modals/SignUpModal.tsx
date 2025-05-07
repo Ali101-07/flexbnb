@@ -1,82 +1,100 @@
 "use client";
 
 import Modals from "./Modals";
-
+import { useSignUp } from "@clerk/nextjs";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import UseSignUpModal from "@/app/Hooks/UseSignUpModal";
 import CustomButton from "../Forms/CustomButton";
-import apiService from "../services/apiService";
-import { handleLogin } from "@/app/lib/actions";
-
+import { toast } from 'react-toastify';
 
 const SignUpModal = () => {
-    //
-    // variables
-
-    const router=useRouter();
+    const router = useRouter();
     const SignUpModal = UseSignUpModal();
+    const { isLoaded, signUp } = useSignUp();
     const [email, setEmail] = useState('');
-    const [Password1, setPassword1] = useState('');
-    const [password2, setPassword2] = useState('');
-    const [errors, setErrors] = useState<string[]>([]);
-
-    //
-    // submit functionalities
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
 
     const submitSignup = async () => {
-        const formData = {
-            email: email,
-            password1: Password1,
-            password2: password2
+        if (!isLoaded) return;
+
+        try {
+            setIsLoading(true);
+
+            if (password !== confirmPassword) {
+                toast.error("Passwords don't match");
+                return;
+            }
+
+            // Start the sign up process with Clerk
+            const result = await signUp.create({
+                emailAddress: email,
+                password: password,
+            });
+
+            // Check if sign up was successful
+            if (result.status === "complete") {
+                // Sign up successful
+                toast.success("Account created successfully!");
+                SignUpModal.close();
+                router.push('/');
+            } else {
+                // Handle verification if needed
+                const firstFactor = result.supportedFirstFactors[0];
+                if (firstFactor.strategy === "email_code" && firstFactor.emailAddressId) {
+                    // Prepare verification
+                    await signUp.prepareFirstFactor({
+                        strategy: "email_code",
+                        emailAddressId: firstFactor.emailAddressId
+                    });
+                    toast.info("Please check your email for verification code");
+                }
+            }
+        } catch (err: any) {
+            console.error("Error during sign up:", err);
+            toast.error(err.errors?.[0]?.message || "Failed to create account");
+        } finally {
+            setIsLoading(false);
         }
+    };
 
-        const response = await apiService.post('/api/auth/register/',JSON.stringify(formData));
-
-        if(response.access){
-            handleLogin(response.user.pk, response.access, response.refresh);
-            
-            SignUpModal.close();
-
-            router.push('/')
-        } else{
-            const tmpErrors: string[]= Object.values(response).map((error: any) =>{
-                return error;
-            })
-
-            setErrors(tmpErrors);
-        }
-    }
     const Content = (
         <>
             <h2 className="mb-6 text-2xl">Welcome To FlexBnB, Please Sign-Up</h2>
 
-            <form
-                action={submitSignup} 
-                className="space-y-4"
-            >
-                <input onChange={(e)=>setEmail(e.target.value)} placeholder="Your Email Address" type="email" className="mb-4 px-4 w-full h-[54px] border border-gray-300 rounded-xl" />
+            <div className="space-y-4">
+                <input 
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Your Email Address"
+                    type="email"
+                    disabled={isLoading}
+                    className="mb-4 px-4 w-full h-[54px] border border-gray-300 rounded-xl"
+                />
 
-                <input onChange={(e)=>setPassword1(e.target.value)} placeholder="Your Password" type="password" className="mb-4 px-4 w-full h-[54px] border border-gray-300 rounded-xl" />
+                <input 
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Your Password"
+                    type="password"
+                    disabled={isLoading}
+                    className="mb-4 px-4 w-full h-[54px] border border-gray-300 rounded-xl"
+                />
 
-                <input onChange={(e)=>setPassword2(e.target.value)} placeholder="Repeat Password" type="password" className="mb-4 px-4 w-full h-[54px] border border-gray-300 rounded-xl" />
-
-                {errors.map((error, index) => {
-                    return (
-                        <div key={`error_${index}`} 
-                            className="p-5 bg-red-500 text-white rounded-xl opacity-80"
-                        >
-                            {error}
-                        </div>
-                    )
-                    })}
+                <input 
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Confirm Password"
+                    type="password"
+                    disabled={isLoading}
+                    className="mb-4 px-4 w-full h-[54px] border border-gray-300 rounded-xl"
+                />
                 
                 <CustomButton
-                    label="Sign-Up"
+                    label={isLoading ? "Creating Account..." : "Sign-Up"}
                     onClick={submitSignup}
+                    disabled={isLoading || !email || !password || !confirmPassword}
                 />
-                 
-            </form>
+            </div>
         </>
     );
 
@@ -85,7 +103,7 @@ const SignUpModal = () => {
             isOpen={SignUpModal.isOpen}
             close={SignUpModal.close}
             label="Sign-Up"
-            Content={Content} // Fixed prop name
+            Content={Content}
         />
     );
 };

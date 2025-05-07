@@ -15,7 +15,7 @@ const PropertyListItem: React.FC<PropertyProps> = ({
     return (
         <div 
             className="cursor-pointer"
-            onClick={() => router.push(`/properties/${property.id}`)}
+            onClick={() => router.push(`/Properties/${property.id}`)}
         >
             <div className="relative overflow-hidden aspect-square rounded-xl">
                 <Image
