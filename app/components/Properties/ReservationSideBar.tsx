@@ -31,9 +31,10 @@ const ReservationSideBar :React.FC<ReservationSideBarProps> = ({
         <p>FlexBnb Fee</p>
         <p>40$</p>
       </div>
+      <hr />
       <div className="m-3 mb-4 flex justify-between align-center">
-        <p>Total Amount</p>
-        <p>{property.price_per_night * 4 + 40}$</p>
+        <p className="font-bold">Total Amount</p>
+        <p className="font-bold">{property.price_per_night * 4 + 40}$</p>
       </div>
     </aside>
   );
