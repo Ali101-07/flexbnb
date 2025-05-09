@@ -1,10 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { Range, RangeKeyDict } from 'react-date-range';
+import Calendar from '../Calendar/Calendar';
+import { format } from 'date-fns';
 
-export type Property={
-   id:string;
-   price_per_night: number;
+export type Property = {
+  id: string;
+  price_per_night: number;
 }
 
 interface ReservationSideBarProps {
@@ -12,35 +15,25 @@ interface ReservationSideBarProps {
   property: Property
 }
 
-const ReservationSideBar :React.FC<ReservationSideBarProps> = ({
-   property,
+const initialDateRange = {
+  startDate: new Date(),
+  endDate: new Date(),
+  key: 'selection'
+};
+
+const ReservationSideBar: React.FC<ReservationSideBarProps> = ({
+  property,
 }) => {
-  const [checkIn, setCheckIn] = useState<string>('');
-  const [checkOut, setCheckOut] = useState<string>('');
-  const [numberOfNights, setNumberOfNights] = useState(0);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [dateRange, setDateRange] = useState<Range[]>([initialDateRange]);
 
-  const calculateNights = (startDate: string, endDate: string) => {
-    if (!startDate || !endDate) return 0;
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const diffTime = Math.abs(end.getTime() - start.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
+  const handleDateChange = (item: RangeKeyDict) => {
+    setDateRange([item.selection]);
   };
 
-  const handleDateChange = (date: string, type: 'checkIn' | 'checkOut') => {
-    if (type === 'checkIn') {
-      setCheckIn(date);
-      if (checkOut) {
-        setNumberOfNights(calculateNights(date, checkOut));
-      }
-    } else {
-      setCheckOut(date);
-      if (checkIn) {
-        setNumberOfNights(calculateNights(checkIn, date));
-      }
-    }
-  };
+  const numberOfNights = dateRange[0].endDate && dateRange[0].startDate
+    ? Math.ceil(Math.abs(dateRange[0].endDate.getTime() - dateRange[0].startDate.getTime()) / (1000 * 60 * 60 * 24))
+    : 0;
 
   const totalNightsCost = property.price_per_night * numberOfNights;
   const flexbnbFee = Math.round(totalNightsCost * 0.30); // 30% of total nights cost
@@ -62,29 +55,51 @@ const ReservationSideBar :React.FC<ReservationSideBarProps> = ({
 
       {/* Check-in/Check-out Box */}
       <div className="mb-6 mx-2">
-        <div className="grid grid-cols-2 border border-gray-400 rounded-xl overflow-hidden">
+        <div 
+          onClick={() => setIsCalendarOpen(true)}
+          className="grid grid-cols-2 border border-gray-400 rounded-xl overflow-hidden cursor-pointer"
+        >
           <div className="p-2 border-r border-gray-400">
             <label className="block font-semibold text-xs mb-1">CHECK-IN</label>
-            <input 
-              type="date" 
-              className="w-full text-sm outline-none"
-              min={new Date().toISOString().split('T')[0]}
-              value={checkIn}
-              onChange={(e) => handleDateChange(e.target.value, 'checkIn')}
-            />
+            <div className="text-sm">
+              {dateRange[0].startDate ? format(dateRange[0].startDate, 'MM/dd/yyyy') : 'Select date'}
+            </div>
           </div>
           <div className="p-2">
             <label className="block font-semibold text-xs mb-1">CHECKOUT</label>
-            <input 
-              type="date" 
-              className="w-full text-sm outline-none"
-              min={checkIn || new Date().toISOString().split('T')[0]}
-              value={checkOut}
-              onChange={(e) => handleDateChange(e.target.value, 'checkOut')}
-            />
+            <div className="text-sm">
+              {dateRange[0].endDate ? format(dateRange[0].endDate, 'MM/dd/yyyy') : 'Select date'}
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Calendar Modal */}
+      {isCalendarOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-800/70">
+          <div className="relative w-full md:w-[500px] h-auto bg-white rounded-xl p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-semibold">Select dates</h3>
+              <button 
+                onClick={() => setIsCalendarOpen(false)}
+                className="p-2 hover:bg-neutral-100 rounded-full transition"
+              >
+                ✕
+              </button>
+            </div>
+            <Calendar
+              value={dateRange}
+              onChange={handleDateChange}
+            />
+            <button
+              onClick={() => setIsCalendarOpen(false)}
+              className="w-full mt-4 p-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="cursor-pointer reservebtn h-[60px] w-[250px] mx-auto flex items-center justify-center text-white font-semibold bg-red-500 hover:bg-red-900 rounded-xl">
         Reserve
@@ -100,6 +115,7 @@ const ReservationSideBar :React.FC<ReservationSideBarProps> = ({
             <p>FlexBnb Fee</p>
             <p>${flexbnbFee}</p>
           </div>
+          <hr />
           <div className="m-3 mb-4 flex justify-between align-center font-bold">
             <p>Total Amount</p>
             <p>${totalAmount}</p>
