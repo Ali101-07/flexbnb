@@ -49,9 +49,21 @@ const PropertyDetailPage = () => {
                 <div className="py-6 pr-6 col-span-3">
                     <h1 className="mb-4 text-4xl">{property.title}</h1>
 
-                    <span className="mb-6 block text-lg text-gray-600">
-                        {property.guests} guests - {property.bedrooms} bedrooms - {property.bathrooms} bathrooms
-                    </span>
+                    <div className="mb-4 flex items-center space-x-4">
+                        <span className="text-lg text-gray-600">
+                            {property.guests} guests - {property.bedrooms} bedrooms - {property.bathrooms} bathrooms
+                        </span>
+                        {property.is_hourly_booking && (
+                            <span className="inline px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">Hourly & nightly booking available</span>
+                        )}
+                    </div>
+
+                    <div className="mb-4 flex items-center space-x-4">
+                        <span className="text-2xl font-bold text-black">${property.price_per_night} <span className="font-normal text-lg">per night</span></span>
+                        {property.is_hourly_booking && (
+                            <span className="text-2xl font-bold text-black">| ${property.price_per_hour} <span className="font-normal text-lg">per hour</span></span>
+                        )}
+                    </div>
 
                     <hr />
 

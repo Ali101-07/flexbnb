@@ -4,10 +4,15 @@ import { useState, useCallback } from 'react';
 import { Range, RangeKeyDict } from 'react-date-range';
 import Calendar from '../Calendar/Calendar';
 import { format } from 'date-fns';
+import { differenceInHours, differenceInMinutes } from 'date-fns';
 
 export type Property = {
   id: string;
   price_per_night: number;
+  price_per_hour?: number;
+  available_hours_start?: string;
+  available_hours_end?: string;
+  is_hourly_booking: boolean;
 }
 
 interface ReservationSideBarProps {
@@ -21,43 +26,102 @@ const initialDateRange = {
   key: 'selection'
 };
 
-const ReservationSideBar: React.FC<ReservationSideBarProps> = ({
-  property,
-}) => {
+const ReservationSideBar = ({ userId, property }: ReservationSideBarProps) => {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-  const [dateRange, setDateRange] = useState<Range[]>([initialDateRange]);
+  const [dateRange, setDateRange] = useState<Range[]>([{
+    startDate: new Date(),
+    endDate: new Date(),
+    key: 'selection'
+  }]);
 
-  const handleDateChange = (item: RangeKeyDict) => {
-    setDateRange([item.selection]);
+  const [useHourlyBooking, setUseHourlyBooking] = useState(false);
+
+  const [selectedTime, setSelectedTime] = useState<{
+    startTime: string;
+    endTime: string;
+  }>({
+    startTime: property.available_hours_start || '00:00',
+    endTime: property.available_hours_end || '23:59'
+  });
+
+  const onDateRangeChange = useCallback((range: RangeKeyDict) => {
+    setDateRange([range.selection]);
+  }, []);
+
+  // Calculate number of nights for nightly booking
+  const getNumberOfNights = () => {
+    const start = dateRange[0].startDate;
+    const end = dateRange[0].endDate;
+    if (!start || !end) return 0;
+    return Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
   };
 
-  const numberOfNights = dateRange[0].endDate && dateRange[0].startDate
-    ? Math.ceil(Math.abs(dateRange[0].endDate.getTime() - dateRange[0].startDate.getTime()) / (1000 * 60 * 60 * 24))
-    : 0;
+  const calculateTotalPrice = () => {
+    if (!dateRange[0].startDate || !dateRange[0].endDate) return 0;
+    if (property.is_hourly_booking && useHourlyBooking) {
+      const startDateTime = new Date(dateRange[0].startDate);
+      const endDateTime = new Date(dateRange[0].endDate);
+      const [startHours, startMinutes] = selectedTime.startTime.split(':').map(Number);
+      const [endHours, endMinutes] = selectedTime.endTime.split(':').map(Number);
+      startDateTime.setHours(startHours, startMinutes);
+      endDateTime.setHours(endHours, endMinutes);
+      const hours = differenceInHours(endDateTime, startDateTime);
+      const minutes = differenceInMinutes(endDateTime, startDateTime) % 60;
+      const hourlyPrice = property.price_per_hour || 0;
+      const totalHours = hours + (minutes / 60);
+      return Math.round(hourlyPrice * totalHours);
+    } else {
+      // Use original nightly booking calculation
+      return property.price_per_night * getNumberOfNights();
+    }
+  };
 
-  const totalNightsCost = property.price_per_night * numberOfNights;
-  const flexbnbFee = Math.round(totalNightsCost * 0.30); // 30% of total nights cost
-  const totalAmount = totalNightsCost + flexbnbFee;
+  const handleTimeChange = (type: 'start' | 'end', value: string) => {
+    setSelectedTime(prev => ({
+      ...prev,
+      [type === 'start' ? 'startTime' : 'endTime']: value
+    }));
+  };
+
+  const handleReservation = () => {
+    if (!userId) {
+      // Handle user not logged in
+      return;
+    }
+    // Create reservation logic here
+    console.log('Creating reservation with:', {
+      dateRange: dateRange[0],
+      selectedTime,
+      totalPrice: calculateTotalPrice(),
+      useHourlyBooking
+    });
+  };
 
   return (
-    <aside className="h-[480px] w-[400px] mt-6 py-6 col-span-2 rounded-xl border border-gray-300 shadow-xl">
-      <h2 className="mb-5 text-2xl m-3">${property.price_per_night} per night</h2>
-      
-      {/* Guest Selection Box */}
-      <div className="h-[50px] mb-6 m-2 pb-3 border border-gray-400 rounded-xl">
-        <label className="block font-semibold text-xs p-1">Guests</label>
-        <select className="w-full text-xm flex items-center" defaultValue={1}>
-          {Array.from({ length: 10 }, (_, i) => (
-            <option key={i + 1}>{i + 1}</option>
-          ))}
-        </select>
-      </div>
-
-      {/* Check-in/Check-out Box */}
+    <aside className="h-[480px] w-[400px] mt-6 py-6 col-span-2 rounded-xl border border-gray-300 shadow-xl bg-white">
+      <h2 className="mb-5 text-2xl m-3">
+        ${property.price_per_night} per night
+        {property.is_hourly_booking && (
+          <span className="ml-2 text-lg font-normal text-gray-700">or ${property.price_per_hour} per hour</span>
+        )}
+      </h2>
+      {property.is_hourly_booking && (
+        <div className="flex items-center mb-4 mx-2">
+          <input
+            type="checkbox"
+            id="hourlyBookingToggle"
+            checked={useHourlyBooking}
+            onChange={e => setUseHourlyBooking(e.target.checked)}
+            className="w-4 h-4 mr-2"
+          />
+          <label htmlFor="hourlyBookingToggle" className="text-sm font-medium cursor-pointer">Book by the hour</label>
+        </div>
+      )}
       <div className="mb-6 mx-2">
-        <div 
-          onClick={() => setIsCalendarOpen(true)}
+        {/* Check-in/Check-out Box triggers calendar modal */}
+        <div
           className="grid grid-cols-2 border border-gray-400 rounded-xl overflow-hidden cursor-pointer"
+          onClick={() => setIsCalendarOpen(true)}
         >
           <div className="p-2 border-r border-gray-400">
             <label className="block font-semibold text-xs mb-1">CHECK-IN</label>
@@ -72,56 +136,101 @@ const ReservationSideBar: React.FC<ReservationSideBarProps> = ({
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Calendar Modal */}
-      {isCalendarOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-800/70">
-          <div className="relative w-full md:w-[500px] h-auto bg-white rounded-xl p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-semibold">Select dates</h3>
-              <button 
+        {/* Calendar Modal */}
+        {isCalendarOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-800/70">
+            <div className="relative w-full md:w-[500px] h-auto bg-white rounded-xl p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-semibold">Select dates</h3>
+                <button
+                  onClick={() => setIsCalendarOpen(false)}
+                  className="p-2 hover:bg-neutral-100 rounded-full transition"
+                >
+                  ✕
+                </button>
+              </div>
+              <Calendar
+                value={dateRange}
+                onChange={(range) => {
+                  setDateRange([range.selection]);
+                  if (
+                    range.selection.startDate &&
+                    range.selection.endDate &&
+                    range.selection.startDate.getTime() !== range.selection.endDate.getTime()
+                  ) {
+                    setIsCalendarOpen(false);
+                  }
+                }}
+              />
+              <button
                 onClick={() => setIsCalendarOpen(false)}
-                className="p-2 hover:bg-neutral-100 rounded-full transition"
+                className="w-full mt-4 p-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
               >
-                ✕
+                Close
               </button>
             </div>
-            <Calendar
-              value={dateRange}
-              onChange={handleDateChange}
-            />
-            <button
-              onClick={() => setIsCalendarOpen(false)}
-              className="w-full mt-4 p-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
-            >
-              Close
-            </button>
+          </div>
+        )}
+        {/* Show time pickers only if hourly booking is selected */}
+        {property.is_hourly_booking && useHourlyBooking && (
+          <div className="flex space-x-4 mt-4">
+            <div className="flex flex-col flex-1">
+              <label className="block font-semibold text-xs mb-1">Start Time</label>
+              <input
+                type="time"
+                value={selectedTime.startTime}
+                onChange={(e) => handleTimeChange('start', e.target.value)}
+                min={property.available_hours_start}
+                max={property.available_hours_end}
+                className="w-full p-2 border rounded-md"
+              />
+            </div>
+            <div className="flex flex-col flex-1">
+              <label className="block font-semibold text-xs mb-1">End Time</label>
+              <input
+                type="time"
+                value={selectedTime.endTime}
+                onChange={(e) => handleTimeChange('end', e.target.value)}
+                min={property.available_hours_start}
+                max={property.available_hours_end}
+                className="w-full p-2 border rounded-md"
+              />
+            </div>
+          </div>
+        )}
+        {/* Show number of nights and per-night breakdown if not using hourly booking */}
+        {(!useHourlyBooking || !property.is_hourly_booking) && (
+          <div className="mt-4 text-sm text-gray-700">
+            {getNumberOfNights() > 0 && (
+              <>
+                <div className="flex justify-between mb-1">
+                  <span>${property.price_per_night} × {getNumberOfNights()} nights</span>
+                  <span>${property.price_per_night * getNumberOfNights()}</span>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+      <div className="p-4 border-[1px] rounded-xl space-y-4 mx-2">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-lg font-semibold">Total</p>
+            <p className="text-sm text-gray-500">
+              {property.is_hourly_booking && useHourlyBooking ? 'Hourly rate' : 'Nightly rate'}
+            </p>
+          </div>
+          <div className="text-lg font-semibold">
+            ${calculateTotalPrice()}
           </div>
         </div>
-      )}
-
-      <div className="cursor-pointer reservebtn h-[60px] w-[250px] mx-auto flex items-center justify-center text-white font-semibold bg-red-500 hover:bg-red-900 rounded-xl">
-        Reserve
+        <button
+          onClick={handleReservation}
+          className="w-full py-4 bg-red-500 hover:bg-red-700 text-white rounded-xl font-semibold text-lg transition"
+        >
+          Reserve
+        </button>
       </div>
-
-      {numberOfNights > 0 && (
-        <>
-          <div className="m-3 mb-4 flex justify-between align-center">
-            <p>${property.price_per_night} × {numberOfNights} nights</p>
-            <p>${totalNightsCost}</p>
-          </div>
-          <div className="m-3 mb-4 flex justify-between align-center">
-            <p>FlexBnb Fee</p>
-            <p>${flexbnbFee}</p>
-          </div>
-          <hr />
-          <div className="m-3 mb-4 flex justify-between align-center font-bold">
-            <p>Total Amount</p>
-            <p>${totalAmount}</p>
-          </div>
-        </>
-      )}
     </aside>
   );
 };
