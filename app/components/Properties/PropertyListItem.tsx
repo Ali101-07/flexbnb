@@ -33,8 +33,13 @@ const PropertyListItem: React.FC<PropertyProps> = ({
                 <p className="text-lg font-bold">{property.title}</p>
             </div>
 
-            <div className="mt-2">
+            <div className="mt-2 flex items-center">
                 <p className="text-sm text-gray-500"><strong>${property.price_per_night}</strong> per night</p>
+                {property.is_hourly_booking && (
+                  <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs ml-2">
+                    Hourly Available
+                  </span>
+                )}
             </div>
         </div>
     )
