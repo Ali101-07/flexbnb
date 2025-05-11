@@ -12,6 +12,8 @@ class PropertiesListSerializer(serializers.ModelSerializer):
             'id',
             'title',
             'price_per_night',
+            'price_per_hour',
+            'is_hourly_booking',
             'image_url',
         )
 
@@ -24,6 +26,10 @@ class PropertiesDetailSerializer(serializers.ModelSerializer):
             'title',
             'description',
             'price_per_night',
+            'price_per_hour',
+            'is_hourly_booking',
+            'available_hours_start',
+            'available_hours_end',
             'image_url',
             'bedrooms',
             'bathrooms',

@@ -19,6 +19,10 @@ const AddPropertyModal = () => {
   const [dataTitle, setDataTitle] = useState("");
   const [dataDescription, setDataDescription] = useState("");
   const [dataPrice, setDataPrice] = useState("");
+  const [dataPricePerHour, setDataPricePerHour] = useState("");
+  const [isHourlyBooking, setIsHourlyBooking] = useState(false);
+  const [availableHoursStart, setAvailableHoursStart] = useState("");
+  const [availableHoursEnd, setAvailableHoursEnd] = useState("");
   const [dataBedrooms, setDataBedrooms] = useState("");
   const [dataBathrooms, setDataBathrooms] = useState("");
   const [dataGuests, setDataGuests] = useState("");
@@ -75,12 +79,23 @@ const AddPropertyModal = () => {
         image: dataImage
       };
 
+      if (isHourlyBooking) {
+        if (!dataPricePerHour || !availableHoursStart || !availableHoursEnd) {
+          toast.error('Please fill in all hourly booking fields');
+          return;
+        }
+      }
+
       console.log('Form data:', {
         ...requiredFields,
         image: dataImage ? dataImage.name : null,
         bedrooms: dataBedrooms,
         bathrooms: dataBathrooms,
-        guests: dataGuests
+        guests: dataGuests,
+        price_per_hour: dataPricePerHour,
+        is_hourly_booking: isHourlyBooking,
+        available_hours_start: availableHoursStart,
+        available_hours_end: availableHoursEnd
       });
 
       const missingFields = Object.entries(requiredFields)
@@ -97,6 +112,10 @@ const AddPropertyModal = () => {
       formData.append('title', dataTitle);
       formData.append('description', dataDescription);
       formData.append('price_per_night', dataPrice);
+      formData.append('price_per_hour', dataPricePerHour);
+      formData.append('is_hourly_booking', isHourlyBooking.toString());
+      formData.append('available_hours_start', availableHoursStart);
+      formData.append('available_hours_end', availableHoursEnd);
       formData.append('bedrooms', dataBedrooms || '0');
       formData.append('bathrooms', dataBathrooms || '0');
       formData.append('guests', dataGuests || '0');
@@ -185,9 +204,59 @@ const AddPropertyModal = () => {
         <>
           <h2 className="mb-6 text-2xl">Details</h2>
           <div className="pt-3 pb-6 space-y-4">
-            {['Price Per Night', 'Bedrooms', 'Bathrooms', 'Guests'].map((label, index) => {
-              const stateSetters = [setDataPrice, setDataBedrooms, setDataBathrooms, setDataGuests];
-              const values = [dataPrice, dataBedrooms, dataBathrooms, dataGuests];
+            <div className="flex flex-col space-y-2">
+              <label>Price Per Night</label>
+              <input
+                type="number"
+                value={dataPrice}
+                onChange={(e) => setDataPrice(e.target.value)}
+                className="w-full h-[20px] p-4 border border-gray-600 rounded-xl"
+              />
+            </div>
+            <div className="flex items-center space-x-2 mb-4">
+              <input
+                type="checkbox"
+                id="hourlyBooking"
+                checked={isHourlyBooking}
+                onChange={(e) => setIsHourlyBooking(e.target.checked)}
+                className="w-4 h-4"
+              />
+              <label htmlFor="hourlyBooking">Enable Hourly Booking</label>
+            </div>
+            {isHourlyBooking && (
+              <>
+                <div className="flex flex-col space-y-2">
+                  <label>Price Per Hour</label>
+                  <input
+                    type="number"
+                    value={dataPricePerHour}
+                    onChange={(e) => setDataPricePerHour(e.target.value)}
+                    className="w-full h-[20px] p-4 border border-gray-600 rounded-xl"
+                  />
+                </div>
+                <div className="flex flex-col space-y-2">
+                  <label>Available Hours Start</label>
+                  <input
+                    type="time"
+                    value={availableHoursStart}
+                    onChange={(e) => setAvailableHoursStart(e.target.value)}
+                    className="w-full h-[20px] p-4 border border-gray-600 rounded-xl"
+                  />
+                </div>
+                <div className="flex flex-col space-y-2">
+                  <label>Available Hours End</label>
+                  <input
+                    type="time"
+                    value={availableHoursEnd}
+                    onChange={(e) => setAvailableHoursEnd(e.target.value)}
+                    className="w-full h-[20px] p-4 border border-gray-600 rounded-xl"
+                  />
+                </div>
+              </>
+            )}
+            {['Bedrooms', 'Bathrooms', 'Guests'].map((label, index) => {
+              const stateSetters = [setDataBedrooms, setDataBathrooms, setDataGuests];
+              const values = [dataBedrooms, dataBathrooms, dataGuests];
               return (
                 <div key={label} className="flex flex-col space-y-2">
                   <label>{label}</label>
