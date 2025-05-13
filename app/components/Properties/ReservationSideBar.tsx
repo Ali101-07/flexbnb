@@ -5,6 +5,10 @@ import { Range, RangeKeyDict } from 'react-date-range';
 import Calendar from '../Calendar/Calendar';
 import { format } from 'date-fns';
 import { differenceInHours, differenceInMinutes } from 'date-fns';
+import PaymentModal from '../PaymentModal';
+import { showBookingConfirmation } from '../Notification';
+import { useUser } from '@clerk/nextjs';
+import ConfirmationModal from '../ConfirmationModal';
 
 export type Property = {
   id: string;
@@ -13,12 +17,12 @@ export type Property = {
   available_hours_start?: string;
   available_hours_end?: string;
   is_hourly_booking: boolean;
+  title: string;
 }
 
-interface ReservationSideBarProps {
-  userId: string | null,
-  property: Property
-}
+type ReservationSideBarProps = {
+  property: Property;
+};
 
 const initialDateRange = {
   startDate: new Date(),
@@ -26,7 +30,11 @@ const initialDateRange = {
   key: 'selection'
 };
 
-const ReservationSideBar = ({ userId, property }: ReservationSideBarProps) => {
+const ReservationSideBar = ({ property }: ReservationSideBarProps) => {
+  const { user } = useUser();
+  const userId = user?.id;
+  console.log('Clerk user:', user);
+  console.log('Clerk userId:', userId);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [dateRange, setDateRange] = useState<Range[]>([{
     startDate: new Date(),
@@ -43,6 +51,11 @@ const ReservationSideBar = ({ userId, property }: ReservationSideBarProps) => {
     startTime: property.available_hours_start || '00:00',
     endTime: property.available_hours_end || '23:59'
   });
+
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [pendingCard, setPendingCard] = useState('');
+  const [pendingExpiry, setPendingExpiry] = useState('');
 
   const onDateRangeChange = useCallback((range: RangeKeyDict) => {
     setDateRange([range.selection]);
@@ -85,16 +98,36 @@ const ReservationSideBar = ({ userId, property }: ReservationSideBarProps) => {
 
   const handleReservation = () => {
     if (!userId) {
-      // Handle user not logged in
+      alert('Please log in to make a reservation.');
       return;
     }
-    // Create reservation logic here
-    console.log('Creating reservation with:', {
-      dateRange: dateRange[0],
-      selectedTime,
-      totalPrice: calculateTotalPrice(),
-      useHourlyBooking
+    setIsPaymentModalOpen(true);
+  };
+
+  const handleRequestConfirm = (card: string, expiry: string) => {
+    setPendingCard(card);
+    setPendingExpiry(expiry);
+    setIsPaymentModalOpen(false);
+    setIsConfirmModalOpen(true);
+  };
+
+  const handleConfirmReservation = async () => {
+    setIsConfirmModalOpen(false);
+    await fetch('/api/reservations/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        propertyId: property.id,
+        propertyTitle: property.title,
+        userId,
+        startDate: dateRange[0].startDate,
+        endDate: dateRange[0].endDate,
+        totalPrice: calculateTotalPrice(),
+        card: pendingCard,
+        expiry: pendingExpiry,
+      })
     });
+    showBookingConfirmation(property.title);
   };
 
   return (
@@ -231,6 +264,25 @@ const ReservationSideBar = ({ userId, property }: ReservationSideBarProps) => {
           Reserve
         </button>
       </div>
+      <PaymentModal
+        isOpen={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
+        amount={calculateTotalPrice()}
+        onRequestConfirm={handleRequestConfirm}
+      />
+      <ConfirmationModal
+        isOpen={isConfirmModalOpen}
+        onClose={() => setIsConfirmModalOpen(false)}
+        onConfirm={handleConfirmReservation}
+        card={pendingCard}
+        expiry={pendingExpiry}
+        property={{
+          title: property.title,
+          startDate: dateRange[0].startDate?.toLocaleDateString() || '',
+          endDate: dateRange[0].endDate?.toLocaleDateString() || '',
+          totalPrice: calculateTotalPrice(),
+        }}
+      />
     </aside>
   );
 };

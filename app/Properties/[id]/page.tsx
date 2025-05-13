@@ -3,14 +3,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import ReservationSideBar from "@/app/components/Properties/ReservationSideBar";
-import { getUserId } from "@/app/lib/actions";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const PropertyDetailPage = () => {
     const params = useParams();
     const [property, setProperty] = useState<any>(null);
-    const [userId, setUserId] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -18,8 +16,6 @@ const PropertyDetailPage = () => {
                 const res = await fetch(`${process.env.NEXT_PUBLIC_API_HOST}/api/properties/${params.id}`);
                 const data = await res.json();
                 setProperty(data);
-                const uid = await getUserId();
-                setUserId(uid);
             } catch (error) {
                 console.error('Error fetching property:', error);
             }
@@ -92,7 +88,6 @@ const PropertyDetailPage = () => {
                 </div>
 
                 <ReservationSideBar 
-                    userId={userId}
                     property={property}
                 />
             </div>
