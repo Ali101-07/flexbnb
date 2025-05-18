@@ -51,6 +51,14 @@ const UserNav = () => {
               />
             </div>
 
+            <MenuLink
+              label="Host Dashboard"
+              onClick={() => {
+                window.location.href = "/Host/Dashboard";
+                setIsOpen(false);
+              }}
+            />
+
             <LogoutButton />
           </SignedIn>
 
