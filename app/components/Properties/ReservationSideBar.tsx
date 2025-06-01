@@ -131,11 +131,11 @@ const ReservationSideBar = ({ property }: ReservationSideBarProps) => {
   };
 
   return (
-    <aside className="h-[480px] w-[400px] mt-6 py-6 col-span-2 rounded-xl border border-gray-300 shadow-xl bg-white">
-      <h2 className="mb-5 text-2xl m-3">
+    <aside className="w-full max-w-sm mx-auto lg:max-w-none py-6 px-4 lg:px-6 rounded-xl border border-gray-300 shadow-xl bg-white">
+      <h2 className="mb-5 text-xl lg:text-2xl font-semibold px-2">
         ${property.price_per_night} per night
         {property.is_hourly_booking && (
-          <span className="ml-2 text-lg font-normal text-gray-700">or ${property.price_per_hour} per hour</span>
+          <span className="block lg:inline lg:ml-2 text-base lg:text-lg font-normal text-gray-700">or ${property.price_per_hour} per hour</span>
         )}
       </h2>
       {property.is_hourly_booking && (
@@ -172,7 +172,7 @@ const ReservationSideBar = ({ property }: ReservationSideBarProps) => {
         {/* Calendar Modal */}
         {isCalendarOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-800/70">
-            <div className="relative w-full md:w-[500px] h-auto bg-white rounded-xl p-6">
+            <div className="relative w-full md:w-[500px] h-auto bg-white rounded-xl p-6 max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-xl font-semibold">Select dates</h3>
                 <button
