@@ -45,7 +45,7 @@ const ReservationsPage = () => {
       {
         id: '1',
         property: { id: '1', title: 'Modern Apartment Downtown', image_url: '/placeholder.jpg' },
-        guest: { id: '1', email: 'john@example.com', name: 'John Doe' },
+        guest: { id: '1', email: 'ali@example.com', name: 'ali' },
         check_in_date: '2024-02-15',
         check_out_date: '2024-02-18',
         guests_count: 2,
@@ -57,7 +57,7 @@ const ReservationsPage = () => {
       {
         id: '2',
         property: { id: '2', title: 'Cozy Studio', image_url: '/placeholder.jpg' },
-        guest: { id: '2', email: 'jane@example.com', name: 'Jane Smith' },
+        guest: { id: '2', email: 'ali@example.com', name: 'ali' },
         check_in_date: '2024-02-20',
         check_out_date: '2024-02-22',
         guests_count: 1,
@@ -69,7 +69,7 @@ const ReservationsPage = () => {
       {
         id: '3',
         property: { id: '1', title: 'Modern Apartment Downtown', image_url: '/placeholder.jpg' },
-        guest: { id: '3', email: 'bob@example.com', name: 'Bob Johnson' },
+        guest: { id: '3', email: 'ali@example.com', name: 'ali' },
         check_in_date: '2024-01-25',
         check_out_date: '2024-01-28',
         guests_count: 3,

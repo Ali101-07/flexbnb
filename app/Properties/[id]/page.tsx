@@ -62,7 +62,7 @@ const PropertyDetailPage = () => {
     const mockReviews = [
         {
             id: 1,
-            user: "Sarah Johnson",
+            user: "Ali Hassan Iqbal",
             avatar: "/api/placeholder/40/40",
             rating: 5,
             date: "March 2024",
@@ -70,7 +70,7 @@ const PropertyDetailPage = () => {
         },
         {
             id: 2,
-            user: "Mike Chen",
+            user: "Ali Hassan Iqbal",
             avatar: "/api/placeholder/40/40", 
             rating: 5,
             date: "February 2024",
@@ -78,7 +78,7 @@ const PropertyDetailPage = () => {
         },
         {
             id: 3,
-            user: "Emma Davis",
+            user: "Ali Hassan Iqbal",
             avatar: "/api/placeholder/40/40",
             rating: 4,
             date: "January 2024", 
@@ -449,7 +449,7 @@ const PropertyDetailPage = () => {
                                     </div>
                                     
                                     <div className="flex-1 text-center sm:text-left">
-                                        <h3 className="text-lg sm:text-xl font-semibold mb-2">{property.host?.name || 'Host Name'}</h3>
+                                        <h3 className="text-lg sm:text-xl font-semibold mb-2">{property.host?.name || 'Ali Hassan Iqbal'}</h3>
                                         <div className="flex flex-wrap justify-center sm:justify-start items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">
                                             <div className="flex items-center space-x-1">
                                                 <StarIconSolid className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-400" />
