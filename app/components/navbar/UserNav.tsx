@@ -58,10 +58,10 @@ const UserNav = () => {
                 setIsOpen(false);
               }}
             />
-
+              <hr className="opacity-10"/>
             <LogoutButton />
           </SignedIn>
-
+           
           <SignedOut>
             {/* User is logged out */}
             <SignInButton mode="modal">
