@@ -4,7 +4,8 @@ from .models import (
     HostEarnings, 
     HostMessage, 
     PropertyAnalytics, 
-    PropertyReview
+    PropertyReview,
+    GuestReview
 )
 
 
@@ -48,5 +49,14 @@ class PropertyReviewAdmin(admin.ModelAdmin):
     list_display = ['id', 'property', 'guest', 'rating', 'created_at']
     list_filter = ['rating', 'created_at']
     search_fields = ['property__title', 'guest__email', 'comment']
+    readonly_fields = ['id', 'created_at']
+    ordering = ['-created_at']
+
+
+@admin.register(GuestReview)
+class GuestReviewAdmin(admin.ModelAdmin):
+    list_display = ['id', 'host', 'guest', 'rating', 'created_at']
+    list_filter = ['rating', 'created_at']
+    search_fields = ['host__email', 'guest__email', 'comment']
     readonly_fields = ['id', 'created_at']
     ordering = ['-created_at'] 

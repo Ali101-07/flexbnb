@@ -3,6 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import ReservationSideBar from "@/app/components/Properties/ReservationSideBar";
+import ReviewsList from "@/app/components/Reviews/ReviewsList";
+import ReviewForm from "@/app/components/Reviews/ReviewForm";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
@@ -29,15 +31,21 @@ import {
   SwatchIcon
 } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartIconSolid, StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
+import { useAuth } from "@clerk/nextjs";
+import Modals from "@/app/components/Modals/Modals";
 
 const PropertyDetailPage = () => {
     const params = useParams();
+    const { getToken } = useAuth();
     const [property, setProperty] = useState<any>(null);
     const [isLiked, setIsLiked] = useState(false);
     const [showAllPhotos, setShowAllPhotos] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [showAllAmenities, setShowAllAmenities] = useState(false);
-    const [showAllReviews, setShowAllReviews] = useState(false);
+    const [canReview, setCanReview] = useState(false);
+    const [reviewReservationId, setReviewReservationId] = useState<string | null>(null);
+    const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+    const [reviewsRefreshKey, setReviewsRefreshKey] = useState(0);
 
     // Mock data for demonstration
     const mockImages = [
@@ -59,33 +67,6 @@ const PropertyDetailPage = () => {
         { name: "Gym", iconName: "UserGroupIcon", available: false }
     ];
 
-    const mockReviews = [
-        {
-            id: 1,
-            user: "Ali Hassan Iqbal",
-            avatar: "/api/placeholder/40/40",
-            rating: 5,
-            date: "March 2024",
-            comment: "Amazing place! Perfect location and the host was very responsive. Would definitely stay again."
-        },
-        {
-            id: 2,
-            user: "Ali Hassan Iqbal",
-            avatar: "/api/placeholder/40/40", 
-            rating: 5,
-            date: "February 2024",
-            comment: "Beautiful property with stunning views. Everything was exactly as described."
-        },
-        {
-            id: 3,
-            user: "Ali Hassan Iqbal",
-            avatar: "/api/placeholder/40/40",
-            rating: 4,
-            date: "January 2024", 
-            comment: "Great stay overall. The place was clean and comfortable. Minor issues with parking but host resolved quickly."
-        }
-    ];
-
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -102,6 +83,38 @@ const PropertyDetailPage = () => {
         }
     }, [params?.id]);
 
+    useEffect(() => {
+        const checkEligibility = async () => {
+            if (!params?.id) return;
+            try {
+                const token = await getToken();
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_HOST}/api/booking/can-review/?property_id=${params.id}`, {
+                    headers: {
+                        'Authorization': token ? `Bearer ${token}` : ''
+                    },
+                    credentials: 'include'
+                });
+                console.log('Review eligibility response status:', res.status);
+                if (res.ok) {
+                    const data = await res.json();
+                    console.log('Review eligibility data:', data);
+                    setCanReview(!!data.canReview);
+                    setReviewReservationId(data.reservation_id || null);
+                } else {
+                    const errorData = await res.json().catch(() => ({}));
+                    console.log('Review eligibility error:', errorData);
+                    setCanReview(false);
+                    setReviewReservationId(null);
+                }
+            } catch (e) {
+                console.error('Error checking review eligibility:', e);
+                setCanReview(false);
+                setReviewReservationId(null);
+            }
+        };
+        checkEligibility();
+    }, [params?.id, getToken]);
+
     const nextImage = () => {
         setCurrentImageIndex((prev) => (prev + 1) % mockImages.length);
     };
@@ -109,6 +122,7 @@ const PropertyDetailPage = () => {
     const prevImage = () => {
         setCurrentImageIndex((prev) => (prev - 1 + mockImages.length) % mockImages.length);
     };
+
 
     if (!property) {
         return (
@@ -198,13 +212,6 @@ const PropertyDetailPage = () => {
                         <div className="min-w-0 flex-1">
                             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 break-words">{property.title}</h1>
                             <div className="flex flex-wrap items-center mt-2 text-sm text-gray-600 gap-x-2">
-                                <div className="flex items-center">
-                                    <StarIconSolid className="h-4 w-4 text-yellow-400 mr-1" />
-                                    <span className="font-medium">4.9</span>
-                                </div>
-                                <span className="hidden sm:inline">·</span>
-                                <span className="underline">127 reviews</span>
-                                <span className="hidden sm:inline">·</span>
                                 <div className="flex items-center">
                                     <MapPinIcon className="h-4 w-4 mr-1" />
                                     <span>{property.country || 'Location'}</span>
@@ -378,49 +385,21 @@ const PropertyDetailPage = () => {
                             )}
                         </div>
 
-                        {/* Reviews */}
+                        {/* Reviews - Using the new ReviewsList component */}
                         <div className="border-b border-gray-200 pb-6 sm:pb-8">
-                            <div className="flex items-center space-x-3 sm:space-x-4 mb-4 sm:mb-6">
-                                <StarIconSolid className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-400" />
-                                <h2 className="text-xl sm:text-2xl font-semibold">4.9 · 127 reviews</h2>
-                            </div>
-                            
-                            <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-4 sm:mb-6">
-                                {mockReviews.slice(0, showAllReviews ? mockReviews.length : 4).map((review) => (
-                                    <div key={review.id} className="space-y-3 p-4 bg-gray-50 rounded-lg">
-                                        <div className="flex items-center space-x-3">
-                                            <Image
-                                                src={review.avatar}
-                                                alt={review.user}
-                                                width={32}
-                                                height={32}
-                                                className="rounded-full sm:w-10 sm:h-10"
-                                            />
-                                            <div>
-                                                <div className="font-medium text-sm sm:text-base">{review.user}</div>
-                                                <div className="text-xs sm:text-sm text-gray-600">{review.date}</div>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center space-x-1">
-                                            {[...Array(5)].map((_, i) => (
-                                                <StarIconSolid
-                                                    key={i}
-                                                    className={`h-3 w-3 sm:h-4 sm:w-4 ${i < review.rating ? 'text-yellow-400' : 'text-gray-300'}`}
-                                                />
-                                            ))}
-                                        </div>
-                                        <p className="text-gray-700 text-xs sm:text-sm leading-relaxed">{review.comment}</p>
-                                    </div>
-                                ))}
-                            </div>
-                            
-                            {mockReviews.length > 4 && (
-                                <button
-                                    onClick={() => setShowAllReviews(!showAllReviews)}
-                                    className="px-4 sm:px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm sm:text-base"
-                                >
-                                    {showAllReviews ? 'Show less' : `Show all ${mockReviews.length} reviews`}
-                                </button>
+                            <ReviewsList
+                                propertyId={params.id as string}
+                                refreshKey={reviewsRefreshKey}
+                            />
+                            {canReview && reviewReservationId && (
+                                <div className="mt-6">
+                                    <button
+                                        onClick={() => setIsReviewModalOpen(true)}
+                                        className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-base shadow-md"
+                                    >
+                                        Review this property
+                                    </button>
+                                </div>
                             )}
                         </div>
 
@@ -451,14 +430,7 @@ const PropertyDetailPage = () => {
                                     <div className="flex-1 text-center sm:text-left">
                                         <h3 className="text-lg sm:text-xl font-semibold mb-2">{property.host?.name || 'Ali Hassan Iqbal'}</h3>
                                         <div className="flex flex-wrap justify-center sm:justify-start items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">
-                                            <div className="flex items-center space-x-1">
-                                                <StarIconSolid className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-400" />
-                                                <span>4.9 rating</span>
-                                            </div>
-                                            <span className="hidden sm:inline">•</span>
-                                            <span>127 reviews</span>
-                                            <span className="hidden sm:inline">•</span>
-                                            <span>3 years hosting</span>
+                                            <span>Hosting on FlexBNB</span>
                                         </div>
                                         <div className="flex items-center justify-center sm:justify-start space-x-2 mb-3 sm:mb-4">
                                             <CheckCircleIcon className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" />
@@ -528,6 +500,18 @@ const PropertyDetailPage = () => {
 
             {/* Image Gallery Modal */}
             {showAllPhotos && <ImageGallery />}
+            {isReviewModalOpen && reviewReservationId && (
+                <Modals
+                    label="Review your stay"
+                    isOpen={isReviewModalOpen}
+                    close={() => setIsReviewModalOpen(false)}
+                    Content={<ReviewForm reservationId={reviewReservationId} onSubmitted={() => { 
+                        setIsReviewModalOpen(false); 
+                        setCanReview(false);
+                        setReviewsRefreshKey(prev => prev + 1); // Refresh reviews list
+                    }} />}
+                />
+            )}
         </>
     );
 };

@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 import { differenceInHours, differenceInMinutes } from 'date-fns';
 import PaymentModal from '../PaymentModal';
 import { showBookingConfirmation } from '../Notification';
-import { useUser } from '@clerk/nextjs';
+import { useAuth, useUser } from '@clerk/nextjs';
 import ConfirmationModal from '../ConfirmationModal';
 
 export type Property = {
@@ -32,6 +32,7 @@ const initialDateRange = {
 
 const ReservationSideBar = ({ property }: ReservationSideBarProps) => {
   const { user } = useUser();
+  const { getToken } = useAuth();
   const userId = user?.id;
   console.log('Clerk user:', user);
   console.log('Clerk userId:', userId);
@@ -56,6 +57,7 @@ const ReservationSideBar = ({ property }: ReservationSideBarProps) => {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [pendingCard, setPendingCard] = useState('');
   const [pendingExpiry, setPendingExpiry] = useState('');
+  const [guests, setGuests] = useState(1);
 
   const onDateRangeChange = useCallback((range: RangeKeyDict) => {
     setDateRange([range.selection]);
@@ -113,21 +115,33 @@ const ReservationSideBar = ({ property }: ReservationSideBarProps) => {
 
   const handleConfirmReservation = async () => {
     setIsConfirmModalOpen(false);
-    await fetch('/api/reservations/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        propertyId: property.id,
-        propertyTitle: property.title,
-        userId,
-        startDate: dateRange[0].startDate,
-        endDate: dateRange[0].endDate,
-        totalPrice: calculateTotalPrice(),
-        card: pendingCard,
-        expiry: pendingExpiry,
-      })
-    });
-    showBookingConfirmation(property.title);
+    try {
+      const token = await getToken();
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_HOST}/api/booking/reservations/create/`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : ''
+        },
+        body: JSON.stringify({
+          propertyId: property.id,
+          startDate: dateRange[0].startDate,
+          endDate: dateRange[0].endDate,
+          totalPrice: calculateTotalPrice(),
+          guests_count: guests,
+          special_requests: '',
+        })
+      });
+      
+      if (response.ok) {
+        showBookingConfirmation(property.title);
+      } else {
+        const errorData = await response.json();
+        console.error('Failed to create reservation:', errorData);
+      }
+    } catch (e) {
+      console.error('Failed to create reservation', e);
+    }
   };
 
   return (
@@ -204,6 +218,29 @@ const ReservationSideBar = ({ property }: ReservationSideBarProps) => {
             </div>
           </div>
         )}
+        
+        {/* Guest count input */}
+        <div className="mt-4">
+          <label className="block font-semibold text-xs mb-1">GUESTS</label>
+          <div className="flex items-center border border-gray-400 rounded-xl p-2">
+            <button
+              type="button"
+              onClick={() => setGuests(Math.max(1, guests - 1))}
+              className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-full hover:bg-gray-100"
+            >
+              -
+            </button>
+            <span className="flex-1 text-center text-sm font-medium">{guests}</span>
+            <button
+              type="button"
+              onClick={() => setGuests(guests + 1)}
+              className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-full hover:bg-gray-100"
+            >
+              +
+            </button>
+          </div>
+        </div>
+        
         {/* Show time pickers only if hourly booking is selected */}
         {property.is_hourly_booking && useHourlyBooking && (
           <div className="flex space-x-4 mt-4">

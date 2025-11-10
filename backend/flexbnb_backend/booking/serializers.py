@@ -4,7 +4,8 @@ from .models import (
     HostEarnings, 
     HostMessage, 
     PropertyAnalytics, 
-    PropertyReview
+    PropertyReview,
+    GuestReview
 )
 from property.models import Property
 from useraccount.models import User
@@ -91,6 +92,19 @@ class PropertyReviewSerializer(serializers.ModelSerializer):
             'id', 'property', 'guest', 'rating', 'comment',
             'cleanliness_rating', 'communication_rating', 
             'location_rating', 'value_rating', 'created_at'
+        ]
+
+
+class GuestReviewSerializer(serializers.ModelSerializer):
+    host = UserBasicSerializer(read_only=True)
+    guest = UserBasicSerializer(read_only=True)
+
+    class Meta:
+        model = GuestReview
+        fields = [
+            'id', 'host', 'guest', 'rating', 'comment',
+            'cleanliness_rating', 'communication_rating', 'rule_compliance_rating',
+            'created_at'
         ]
 
 

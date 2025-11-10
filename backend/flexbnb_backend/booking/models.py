@@ -130,4 +130,26 @@ class PropertyReview(models.Model):
         return f"Review for {self.property.title} - {self.rating} stars"
     
     class Meta:
+        ordering = ['-created_at']
+
+
+class GuestReview(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    reservation = models.OneToOneField(Reservation, related_name='guest_review', on_delete=models.CASCADE)
+    host = models.ForeignKey(User, related_name='guest_reviews_given', on_delete=models.CASCADE)
+    guest = models.ForeignKey(User, related_name='guest_reviews_received', on_delete=models.CASCADE)
+
+    rating = models.IntegerField(choices=[(i, i) for i in range(1, 6)])
+    comment = models.TextField(blank=True)
+
+    cleanliness_rating = models.IntegerField(choices=[(i, i) for i in range(1, 6)])
+    communication_rating = models.IntegerField(choices=[(i, i) for i in range(1, 6)])
+    rule_compliance_rating = models.IntegerField(choices=[(i, i) for i in range(1, 6)])
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Guest review {self.id} - {self.rating} stars"
+
+    class Meta:
         ordering = ['-created_at'] 

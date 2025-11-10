@@ -41,13 +41,10 @@ const SignUpModal = () => {
                 SignUpModal.close();
                 router.push('/');
             } else {
-                // Handle verification if needed
-                const firstFactor = result.supportedFirstFactors[0];
-                if (firstFactor.strategy === "email_code" && firstFactor.emailAddressId) {
-                    // Prepare verification
-                    await signUp.prepareFirstFactor({
-                        strategy: "email_code",
-                        emailAddressId: firstFactor.emailAddressId
+                // Handle email verification if needed
+                if (result.unverifiedFields.includes("email_address")) {
+                    await signUp.prepareEmailAddressVerification({
+                        strategy: "email_code"
                     });
                     toast.info("Please check your email for verification code");
                 }
@@ -89,11 +86,13 @@ const SignUpModal = () => {
                     className="mb-4 px-4 w-full h-[54px] border border-gray-300 rounded-xl"
                 />
                 
-                <CustomButton
-                    label={isLoading ? "Creating Account..." : "Sign-Up"}
+                <button
                     onClick={submitSignup}
                     disabled={isLoading || !email || !password || !confirmPassword}
-                />
+                    className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                    {isLoading ? "Creating Account..." : "Sign-Up"}
+                </button>
             </div>
         </>
     );

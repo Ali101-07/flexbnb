@@ -52,6 +52,14 @@ const UserNav = () => {
             </div>
 
             <MenuLink
+              label="My Reservations"
+              onClick={() => {
+                window.location.href = "/MyReservations";
+                setIsOpen(false);
+              }}
+            />
+
+            <MenuLink
               label="Host Dashboard"
               onClick={() => {
                 window.location.href = "/Host/Dashboard";

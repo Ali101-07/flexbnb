@@ -46,13 +46,8 @@ class ClerkAuthentication(BaseAuthentication):
             if not public_key:
                 raise AuthenticationFailed('Public key not found')
             
-            # First decode without verification to check the audience
+            # First decode without verification to inspect claims
             unverified_payload = jwt.decode(token, options={'verify_signature': False})
-            
-            # Get the audience from the token
-            token_aud = unverified_payload.get('aud', [])
-            if isinstance(token_aud, str):
-                token_aud = [token_aud]
             
             # Verify and decode the token
             try:
@@ -60,11 +55,11 @@ class ClerkAuthentication(BaseAuthentication):
                     token,
                     public_key,
                     algorithms=['RS256'],
-                    audience='flexbnb-api',  # Set the expected audience
                     issuer=clerk_issuer,
                     options={
                         'verify_exp': True,
-                        'verify_iss': True
+                        'verify_iss': True,
+                        'verify_aud': False  # Accept default Clerk session tokens without custom audience
                     }
                 )
             except jwt.InvalidTokenError as e:
@@ -77,23 +72,28 @@ class ClerkAuthentication(BaseAuthentication):
             if not user_id:
                 raise AuthenticationFailed('Invalid token: no user ID')
             
-            email = decoded.get('email', '')
-            name = decoded.get('name', '')
+            email = decoded.get('email') or ''
+            name = decoded.get('name') or ''
             
             # Get or create user
             user, created = User.objects.get_or_create(
                 clerk_id=user_id,
                 defaults={
-                    'email': email,
-                    'name': name,
+                    'email': email or f"user-{user_id}@example.com",
+                    'name': name or '',
                     'is_active': True
                 }
             )
             
-            if not created and (user.email != email or user.name != name):
-                # Update user information if it has changed
+            # Update user info if claims present and changed
+            updated = False
+            if email and user.email != email:
                 user.email = email
+                updated = True
+            if name and user.name != name:
                 user.name = name
+                updated = True
+            if updated:
                 user.save()
             
             return (user, None)

@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from 'react';
-import { SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
+import { SignedIn, SignedOut, SignInButton, useAuth } from "@clerk/nextjs";
 import { 
   CalendarIcon, 
   UserIcon, 
@@ -12,6 +12,9 @@ import {
 import DashboardLayout from '../../components/Host/DashboardLayout';
 import DataTable from '../../components/Host/DataTable';
 import StatsCard from '../../components/Host/StatsCard';
+import GuestReviewForm from '../../components/Reviews/GuestReviewForm';
+import Modals from '../../components/Modals/Modals';
+import ViewDetailsModal from '../../components/Modals/ViewDetailsModal';
 
 interface Reservation {
   id: string;
@@ -28,76 +31,102 @@ interface Reservation {
   check_in_date: string;
   check_out_date: string;
   guests_count: number;
-  total_price: number;
+  total_price: number | string;
   status: string;
   special_requests: string;
   created_at: string;
 }
 
 const ReservationsPage = () => {
+  const { getToken } = useAuth();
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('');
+  const [openReviewReservationId, setOpenReviewReservationId] = useState<string | null>(null);
+  const [selectedReservationForDetails, setSelectedReservationForDetails] = useState<Reservation | null>(null);
 
   useEffect(() => {
-    // Mock data for demonstration
-    const mockReservations: Reservation[] = [
-      {
-        id: '1',
-        property: { id: '1', title: 'Modern Apartment Downtown', image_url: '/placeholder.jpg' },
-        guest: { id: '1', email: 'ali@example.com', name: 'ali' },
-        check_in_date: '2024-02-15',
-        check_out_date: '2024-02-18',
-        guests_count: 2,
-        total_price: 450.00,
-        status: 'approved',
-        special_requests: 'Late check-in requested',
-        created_at: '2024-02-10T10:30:00Z'
-      },
-      {
-        id: '2',
-        property: { id: '2', title: 'Cozy Studio', image_url: '/placeholder.jpg' },
-        guest: { id: '2', email: 'ali@example.com', name: 'ali' },
-        check_in_date: '2024-02-20',
-        check_out_date: '2024-02-22',
-        guests_count: 1,
-        total_price: 280.00,
-        status: 'pending',
-        special_requests: '',
-        created_at: '2024-02-12T14:15:00Z'
-      },
-      {
-        id: '3',
-        property: { id: '1', title: 'Modern Apartment Downtown', image_url: '/placeholder.jpg' },
-        guest: { id: '3', email: 'ali@example.com', name: 'ali' },
-        check_in_date: '2024-01-25',
-        check_out_date: '2024-01-28',
-        guests_count: 3,
-        total_price: 675.00,
-        status: 'completed',
-        special_requests: 'Extra towels needed',
-        created_at: '2024-01-20T09:00:00Z'
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const token = await getToken();
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_HOST}/api/booking/reservations/`, {
+          headers: {
+            'Authorization': token ? `Bearer ${token}` : '',
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+        });
+        if (!res.ok) throw new Error('Failed to load reservations');
+        const data = await res.json();
+        setReservations(data);
+      } catch (e) {
+        // Fallback: empty list rather than mock ids that break UUID validation
+        setReservations([]);
+      } finally {
+        setLoading(false);
       }
-    ];
+    };
+    fetchData();
+  }, [getToken]);
 
-    setReservations(mockReservations);
-    setLoading(false);
-  }, []);
+  const handleApprove = async (reservationId: string) => {
+    try {
+      const token = await getToken();
+      console.log('Approving reservation:', reservationId);
+      console.log('API URL:', `${process.env.NEXT_PUBLIC_API_HOST}/api/booking/reservations/${reservationId}/status/`);
+      
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_HOST}/api/booking/reservations/${reservationId}/status/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: 'approved' })
+      });
 
-  const handleApprove = (reservationId: string) => {
-    setReservations(prev => 
-      prev.map(res => 
-        res.id === reservationId ? { ...res, status: 'approved' } : res
-      )
-    );
+      if (response.ok) {
+        // Update local state only after successful backend update
+        setReservations(prev => 
+          prev.map(res => 
+            res.id === reservationId ? { ...res, status: 'approved' } : res
+          )
+        );
+      } else {
+        const errorText = await response.text();
+        console.error('Failed to approve reservation:', response.status, errorText);
+      }
+    } catch (error) {
+      console.error('Error approving reservation:', error);
+    }
   };
 
-  const handleDecline = (reservationId: string) => {
-    setReservations(prev => 
-      prev.map(res => 
-        res.id === reservationId ? { ...res, status: 'declined' } : res
-      )
-    );
+  const handleDecline = async (reservationId: string) => {
+    try {
+      const token = await getToken();
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_HOST}/api/booking/reservations/${reservationId}/status/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: 'declined' })
+      });
+
+      if (response.ok) {
+        // Update local state only after successful backend update
+        setReservations(prev => 
+          prev.map(res => 
+            res.id === reservationId ? { ...res, status: 'declined' } : res
+          )
+        );
+      } else {
+        const errorText = await response.text();
+        console.error('Failed to decline reservation:', response.status, errorText);
+      }
+    } catch (error) {
+      console.error('Error declining reservation:', error);
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -110,6 +139,8 @@ const ReservationsPage = () => {
     };
     return badges[status as keyof typeof badges] || badges.cancelled;
   };
+
+  const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString('en-US', { timeZone: 'UTC' });
 
   const columns = [
     {
@@ -143,13 +174,13 @@ const ReservationsPage = () => {
       key: 'check_in_date',
       label: 'Check-in',
       sortable: true,
-      render: (value: string) => new Date(value).toLocaleDateString()
+      render: (value: string) => formatDate(value)
     },
     {
       key: 'check_out_date',
       label: 'Check-out',
       sortable: true,
-      render: (value: string) => new Date(value).toLocaleDateString()
+      render: (value: string) => formatDate(value)
     },
     {
       key: 'guests_count',
@@ -160,7 +191,7 @@ const ReservationsPage = () => {
       key: 'total_price',
       label: 'Amount',
       sortable: true,
-      render: (value: number) => `$${value.toFixed(2)}`
+      render: (value: number | string) => `$${Number(value).toFixed(2)}`
     },
     {
       key: 'status',
@@ -176,28 +207,48 @@ const ReservationsPage = () => {
       key: 'actions',
       label: 'Actions',
       render: (value: any, row: Reservation) => (
-        <div className="flex space-x-2">
-          {row.status === 'pending' && (
-            <>
-              <button
-                onClick={() => handleApprove(row.id)}
-                className="p-1 text-green-600 hover:text-green-800"
-                title="Approve"
+        <div className="flex flex-col space-y-2">
+          <div className="flex space-x-2">
+            {row.status === 'pending' && (
+              <>
+                <button
+                  onClick={() => handleApprove(row.id)}
+                  className="p-1 text-green-600 hover:text-green-800"
+                  title="Approve"
+                >
+                  <CheckCircleIcon className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={() => handleDecline(row.id)}
+                  className="p-1 text-red-600 hover:text-red-800"
+                  title="Decline"
+                >
+                  <XCircleIcon className="h-5 w-5" />
+                </button>
+              </>
+            )}
+              <button 
+                onClick={() => setSelectedReservationForDetails(row)}
+                className="text-blue-600 hover:text-blue-800 text-sm"
               >
-                <CheckCircleIcon className="h-5 w-5" />
+                View Details
               </button>
-              <button
-                onClick={() => handleDecline(row.id)}
-                className="p-1 text-red-600 hover:text-red-800"
-                title="Decline"
-              >
-                <XCircleIcon className="h-5 w-5" />
-              </button>
-            </>
-          )}
-          <button className="text-blue-600 hover:text-blue-800 text-sm">
-            View Details
-          </button>
+          </div>
+          {((row.status === 'completed' || 
+             (row.status === 'approved' && (() => {
+               const checkout = new Date(row.check_out_date);
+               const today = new Date();
+               checkout.setHours(0, 0, 0, 0);
+               today.setHours(0, 0, 0, 0);
+               return checkout <= today;
+             })())) && (
+            <button
+              onClick={() => setOpenReviewReservationId(row.id)}
+              className="self-start px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              Review guest
+            </button>
+          ))}
         </div>
       )
     }
@@ -320,6 +371,21 @@ const ReservationsPage = () => {
           <SignInButton />
         </div>
       </SignedOut>
+
+        {openReviewReservationId && (
+          <Modals
+            label="Review guest"
+            isOpen={!!openReviewReservationId}
+            close={() => setOpenReviewReservationId(null)}
+            Content={<GuestReviewForm reservationId={openReviewReservationId} onSubmitted={() => setOpenReviewReservationId(null)} />}
+          />
+        )}
+
+        <ViewDetailsModal
+          isOpen={!!selectedReservationForDetails}
+          onClose={() => setSelectedReservationForDetails(null)}
+          reservation={selectedReservationForDetails}
+        />
     </>
   );
 };

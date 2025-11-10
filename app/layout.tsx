@@ -5,7 +5,6 @@ import Navbar from "./components/navbar/Navbar";
 import LoginModal from "./components/Modals/LoginModal";
 import SignUpModal from "./components/Modals/SignUpModal";
 import AddPropertyModal from "./components/Modals/AddPropertyModal";
-// import SignInButton from "./components/Modals/SignInButton";
 import {
   ClerkProvider,
   SignInButton,
@@ -14,7 +13,7 @@ import {
   SignedOut,
   UserButton,
 } from '@clerk/nextjs'
-import { Toaster } from 'react-hot-toast';
+import ToasterProvider from "./components/ToasterProvider";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -35,37 +34,22 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const Content =(
-      <p>hahah</p>
-  )
   return (
     <ClerkProvider>
-      <>
-        <html lang="en">
-          <body
-            className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-          >
-            <Navbar/>
-            <AddPropertyModal/>
-            <Toaster />
-            <div className="pt-24">
+      <html lang="en">
+        <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+          <Navbar/>
+          <AddPropertyModal/>
+          <ToasterProvider />
+          <div className="pt-24">
             {children}
-            </div>
-            {/* <Modals
-            label="sadsa"
-            Content={Content}
-            isOpen={true}
-            /> */}
-            {/* <LoginModal/> */}
-            <SignedOut>
-              <SignInButton />
-              <SignUpButton />
-            </SignedOut>
-            
-            {/* <SignUpModal/> */}
-          </body>
-        </html>
-      </>
+          </div>
+          <SignedOut>
+            <SignInButton />
+            <SignUpButton />
+          </SignedOut>
+        </body>
+      </html>
     </ClerkProvider>
   );
 }
