@@ -5,6 +5,7 @@ import Link from "next/link";
 import ReservationSideBar from "@/app/components/Properties/ReservationSideBar";
 import ReviewsList from "@/app/components/Reviews/ReviewsList";
 import ReviewForm from "@/app/components/Reviews/ReviewForm";
+import { PricingInsights } from "@/app/components/Recommendation";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
@@ -492,6 +493,11 @@ const PropertyDetailPage = () => {
                                         <span>Free cancellation available</span>
                                     </div>
                                 </div>
+                            </div>
+                            
+                            {/* Dynamic Pricing Insights */}
+                            <div className="mt-6">
+                                <PricingInsights propertyId={params.id as string} />
                             </div>
                         </div>
                     </div>

@@ -66,7 +66,26 @@ const UserNav = () => {
                 setIsOpen(false);
               }}
             />
-              <hr className="opacity-10"/>
+
+            <hr className="opacity-10"/>
+
+            <MenuLink
+              label="🗓️ Itinerary Planner"
+              onClick={() => {
+                window.location.href = "/itinerary-planner";
+                setIsOpen(false);
+              }}
+            />
+
+            <MenuLink
+              label="⚙️ My Preferences"
+              onClick={() => {
+                window.location.href = "/preferences";
+                setIsOpen(false);
+              }}
+            />
+
+            <hr className="opacity-10"/>
             <LogoutButton />
           </SignedIn>
            

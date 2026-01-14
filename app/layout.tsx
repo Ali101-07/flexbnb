@@ -14,6 +14,7 @@ import {
   UserButton,
 } from '@clerk/nextjs'
 import ToasterProvider from "./components/ToasterProvider";
+import { TravelChatbot } from "./components/Recommendation";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -48,6 +49,8 @@ export default function RootLayout({
             <SignInButton />
             <SignUpButton />
           </SignedOut>
+          {/* AI Travel Chatbot - Available on all pages */}
+          <TravelChatbot />
         </body>
       </html>
     </ClerkProvider>

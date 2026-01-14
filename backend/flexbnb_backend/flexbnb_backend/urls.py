@@ -8,6 +8,7 @@ urlpatterns = [
     path('api/properties/', include('property.urls')),
     path('api/auth/', include('useraccount.urls')),
     path('api/booking/', include('booking.urls')),
+    path('api/recommendation/', include('recommendation.urls')),
 ]
 
 if settings.DEBUG:
