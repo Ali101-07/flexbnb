@@ -16,4 +16,7 @@ urlpatterns = [
     path('guest-reviews/submit/', views.submit_guest_review, name='submit_guest_review'),
     path('guest-reservations/', views.guest_reservations, name='guest_reservations'),
     path('can-review/', views.can_review_property, name='can_review_property'),
+    # Room Pool Reservations
+    path('pool-member-reservations/', views.pool_member_reservations, name='pool_member_reservations'),
+    path('host-pool-reservations/', views.host_pool_reservations, name='host_pool_reservations'),
 ]

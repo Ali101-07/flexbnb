@@ -15,6 +15,7 @@ class PropertiesListSerializer(serializers.ModelSerializer):
             'price_per_hour',
             'is_hourly_booking',
             'image_url',
+            'allow_room_pooling',
         )
 
 class PropertiesDetailSerializer(serializers.ModelSerializer):
@@ -35,4 +36,6 @@ class PropertiesDetailSerializer(serializers.ModelSerializer):
             'bathrooms',
             'guests',
             'host',
+            'allow_room_pooling',
+            'max_pool_members',
         )

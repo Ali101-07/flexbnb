@@ -7,7 +7,8 @@ import {
   CurrencyDollarIcon,
   ClockIcon,
   CheckCircleIcon,
-  XCircleIcon
+  XCircleIcon,
+  UserGroupIcon
 } from '@heroicons/react/24/outline';
 import DashboardLayout from '../../components/Host/DashboardLayout';
 import DataTable from '../../components/Host/DataTable';
@@ -15,6 +16,24 @@ import StatsCard from '../../components/Host/StatsCard';
 import GuestReviewForm from '../../components/Reviews/GuestReviewForm';
 import Modals from '../../components/Modals/Modals';
 import ViewDetailsModal from '../../components/Modals/ViewDetailsModal';
+import Link from 'next/link';
+
+interface PoolMember {
+  name: string;
+  email: string;
+  share_amount: number;
+  payment_status: string;
+  is_creator: boolean;
+}
+
+interface PoolDetails {
+  pool_id: string;
+  pool_title: string;
+  creator_name: string;
+  members: PoolMember[];
+  total_collected: number;
+  visibility: string;
+}
 
 interface Reservation {
   id: string;
@@ -35,6 +54,12 @@ interface Reservation {
   status: string;
   special_requests: string;
   created_at: string;
+  // Room pooling fields
+  is_room_pool?: boolean;
+  booking_type?: string;
+  room_pool_id?: string;
+  pool_members_count?: number;
+  pool_details?: PoolDetails;
 }
 
 const ReservationsPage = () => {
@@ -149,12 +174,22 @@ const ReservationsPage = () => {
       sortable: true,
       render: (value: string, row: Reservation) => (
         <div className="flex items-center space-x-3">
-          <div className="w-12 h-12 rounded-lg bg-gray-200 flex items-center justify-center">
-            <CalendarIcon className="h-6 w-6 text-gray-500" />
+          <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+            row.is_room_pool ? 'bg-indigo-100' : 'bg-gray-200'
+          }`}>
+            {row.is_room_pool ? (
+              <UserGroupIcon className="h-6 w-6 text-indigo-600" />
+            ) : (
+              <CalendarIcon className="h-6 w-6 text-gray-500" />
+            )}
           </div>
           <div>
             <div className="font-medium text-gray-900">{value}</div>
-            <div className="text-sm text-gray-500">ID: {row.property.id}</div>
+            {row.is_room_pool && row.pool_details ? (
+              <div className="text-sm text-indigo-600">Pool: {row.pool_details.pool_title}</div>
+            ) : (
+              <div className="text-sm text-gray-500">ID: {row.property.id}</div>
+            )}
           </div>
         </div>
       )
@@ -165,8 +200,20 @@ const ReservationsPage = () => {
       sortable: true,
       render: (value: string, row: Reservation) => (
         <div>
-          <div className="font-medium text-gray-900">{value}</div>
+          <div className="font-medium text-gray-900">
+            {value}
+            {row.is_room_pool && (
+              <span className="ml-2 text-xs bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full">
+                Pool Creator
+              </span>
+            )}
+          </div>
           <div className="text-sm text-gray-500">{row.guest.email}</div>
+          {row.is_room_pool && row.pool_members_count && row.pool_members_count > 1 && (
+            <div className="text-xs text-indigo-600 mt-1">
+              +{row.pool_members_count - 1} pool members
+            </div>
+          )}
         </div>
       )
     },
@@ -185,22 +232,44 @@ const ReservationsPage = () => {
     {
       key: 'guests_count',
       label: 'Guests',
-      sortable: true
+      sortable: true,
+      render: (value: number, row: Reservation) => (
+        <div className="flex items-center gap-1">
+          {value}
+          {row.is_room_pool && (
+            <UserGroupIcon className="w-4 h-4 text-indigo-600" title="Room Pool Booking" />
+          )}
+        </div>
+      )
     },
     {
       key: 'total_price',
       label: 'Amount',
       sortable: true,
-      render: (value: number | string) => `$${Number(value).toFixed(2)}`
+      render: (value: number | string, row: Reservation) => (
+        <div>
+          <div className="font-medium">${Number(value).toFixed(2)}</div>
+          {row.is_room_pool && row.pool_details && (
+            <div className="text-xs text-emerald-600">
+              Collected: ${row.pool_details.total_collected.toFixed(2)}
+            </div>
+          )}
+        </div>
+      )
     },
     {
       key: 'status',
       label: 'Status',
       sortable: true,
-      render: (value: string) => (
-        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusBadge(value)}`}>
-          {value.charAt(0).toUpperCase() + value.slice(1)}
-        </span>
+      render: (value: string, row: Reservation) => (
+        <div className="flex flex-col gap-1">
+          <span className={`px-2 py-1 text-xs font-medium rounded-full inline-block w-fit ${getStatusBadge(value)}`}>
+            {value.charAt(0).toUpperCase() + value.slice(1)}
+          </span>
+          {row.is_room_pool && (
+            <span className="text-xs text-indigo-600">Pool Booking</span>
+          )}
+        </div>
       )
     },
     {

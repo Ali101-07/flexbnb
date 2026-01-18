@@ -24,6 +24,10 @@ class Property(models.Model):
     Host = models.ForeignKey(User, related_name='properties', on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     
+    # Room Pooling Settings
+    allow_room_pooling = models.BooleanField(default=False)
+    max_pool_members = models.IntegerField(default=6, null=True, blank=True)
+    
     def image_url(self):
         return f'{settings.WEBSITE_URL}{self.image.url}'
     def __str__(self):

@@ -70,6 +70,14 @@ const UserNav = () => {
             <hr className="opacity-10"/>
 
             <MenuLink
+              label="🏠 Room Pooling"
+              onClick={() => {
+                window.location.href = "/room-pooling";
+                setIsOpen(false);
+              }}
+            />
+
+            <MenuLink
               label="🗓️ Itinerary Planner"
               onClick={() => {
                 window.location.href = "/itinerary-planner";

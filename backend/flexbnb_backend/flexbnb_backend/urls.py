@@ -9,6 +9,7 @@ urlpatterns = [
     path('api/auth/', include('useraccount.urls')),
     path('api/booking/', include('booking.urls')),
     path('api/recommendation/', include('recommendation.urls')),
+    path('api/roompooling/', include('roompooling.urls')),
 ]
 
 if settings.DEBUG:

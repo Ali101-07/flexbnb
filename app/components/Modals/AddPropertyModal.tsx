@@ -27,6 +27,8 @@ const AddPropertyModal = () => {
   const [dataBathrooms, setDataBathrooms] = useState("");
   const [dataGuests, setDataGuests] = useState("");
   const [dataCountry, setDataCountry] = useState<SelectCountryValue>();
+  const [allowRoomPooling, setAllowRoomPooling] = useState(false);
+  const [maxPoolMembers, setMaxPoolMembers] = useState("6");
   const [dataImage, setDataImage] = useState<File | null>(null);
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
@@ -124,6 +126,8 @@ const AddPropertyModal = () => {
       formData.append('image', dataImage);
       formData.append('latitude', latitude?.toString() || '');
       formData.append('longitude', longitude?.toString() || '');
+      formData.append('allow_room_pooling', allowRoomPooling.toString());
+      formData.append('max_pool_members', allowRoomPooling ? maxPoolMembers : '6');
 
       console.log('Submitting to API...');
       const response = await apiService.post('/api/properties/create/', formData, token);
@@ -269,6 +273,42 @@ const AddPropertyModal = () => {
                 </div>
               );
             })}
+            
+            {/* Room Pooling Settings */}
+            <div className="pt-4 border-t border-gray-200 mt-4">
+              <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                🏠 Room Pooling Settings
+              </h3>
+              <div className="flex items-center space-x-2 mb-4">
+                <input
+                  type="checkbox"
+                  id="allowRoomPooling"
+                  checked={allowRoomPooling}
+                  onChange={(e) => setAllowRoomPooling(e.target.checked)}
+                  className="w-4 h-4"
+                />
+                <label htmlFor="allowRoomPooling">Allow guests to create shared room pools</label>
+              </div>
+              {allowRoomPooling && (
+                <div className="flex flex-col space-y-2 ml-6 p-3 bg-blue-50 rounded-lg">
+                  <p className="text-sm text-gray-600 mb-2">
+                    Room pooling allows multiple guests to share this property and split costs.
+                  </p>
+                  <label>Maximum Pool Members</label>
+                  <input
+                    type="number"
+                    value={maxPoolMembers}
+                    onChange={(e) => setMaxPoolMembers(e.target.value)}
+                    min="2"
+                    max="20"
+                    className="w-full h-[20px] p-4 border border-gray-300 rounded-xl"
+                  />
+                  <p className="text-xs text-gray-500">
+                    Set the maximum number of guests that can join a room pool (2-20)
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
           <CustomButton label="Previous" className="!mb-2 !bg-black hover:!bg-gray-800" onClick={() => setCurrentStep(2)} />
           <CustomButton label="Next" onClick={() => setCurrentStep(4)} />

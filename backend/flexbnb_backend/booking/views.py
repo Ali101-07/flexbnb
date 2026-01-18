@@ -141,6 +141,37 @@ def update_reservation_status(request, reservation_id):
                 platform_fee=platform_fee,
                 net_earnings=net_earnings
             )
+            
+            # If this is a room pool booking, update the pool status
+            if reservation.is_room_pool and reservation.room_pool_id:
+                try:
+                    from roompooling.models import RoomPool, PoolChat
+                    pool = RoomPool.objects.get(id=reservation.room_pool_id)
+                    
+                    # Send notification to pool chat
+                    PoolChat.objects.create(
+                        pool=pool,
+                        message_type='system',
+                        message=f'✅ Great news! The host has approved our booking!'
+                    )
+                except Exception:
+                    pass  # Pool notification is optional
+        
+        # If declined and this is a room pool, notify members
+        if new_status == 'declined' and reservation.is_room_pool and reservation.room_pool_id:
+            try:
+                from roompooling.models import RoomPool, PoolChat
+                pool = RoomPool.objects.get(id=reservation.room_pool_id)
+                pool.status = 'cancelled'
+                pool.save()
+                
+                PoolChat.objects.create(
+                    pool=pool,
+                    message_type='system',
+                    message=f'❌ Unfortunately, the host has declined our booking request.'
+                )
+            except Exception:
+                pass
         
         serializer = ReservationSerializer(reservation)
         return Response(serializer.data)
@@ -564,3 +595,110 @@ def create_reservation(request):
         return Response({'error': 'ValidationError', 'detail': _serialize_validation_error(e)}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
         return Response({'error': 'Unexpected server error', 'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@authentication_classes([ClerkAuthentication])
+@permission_classes([permissions.IsAuthenticated])
+def pool_member_reservations(request):
+    """
+    Get reservations where the user is a pool member (not just the primary guest).
+    This allows pool members to see their shared bookings.
+    """
+    user = request.user
+    
+    try:
+        from roompooling.models import RoomPoolMember, RoomPool
+        
+        # Find pools where user is an approved member
+        member_pools = RoomPoolMember.objects.filter(
+            user=user,
+            status='approved'
+        ).values_list('pool_id', flat=True)
+        
+        # Get reservations linked to those pools
+        pool_reservations = Reservation.objects.filter(
+            is_room_pool=True,
+            room_pool_id__in=member_pools
+        ).order_by('-created_at')
+        
+        # Enrich with pool membership info
+        results = []
+        for res in pool_reservations:
+            res_data = ReservationSerializer(res).data
+            
+            # Get member's specific payment info
+            try:
+                pool = RoomPool.objects.get(id=res.room_pool_id)
+                membership = RoomPoolMember.objects.get(pool=pool, user=user)
+                res_data['pool_info'] = {
+                    'pool_id': str(pool.id),
+                    'pool_title': pool.title,
+                    'my_share': float(membership.share_amount),
+                    'amount_paid': float(membership.amount_paid),
+                    'payment_status': membership.payment_status,
+                    'is_creator': membership.is_creator,
+                    'total_members': pool.current_members
+                }
+            except Exception:
+                res_data['pool_info'] = None
+            
+            results.append(res_data)
+        
+        return Response(results)
+        
+    except ImportError:
+        return Response({'error': 'Room pooling module not available'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@authentication_classes([ClerkAuthentication])
+@permission_classes([permissions.IsAuthenticated])
+def host_pool_reservations(request):
+    """
+    Get room pool reservations for the host's properties.
+    Shows additional pool information for the host.
+    """
+    user = request.user
+    
+    pool_reservations = Reservation.objects.filter(
+        host=user,
+        is_room_pool=True
+    ).order_by('-created_at')
+    
+    results = []
+    for res in pool_reservations:
+        res_data = ReservationSerializer(res).data
+        
+        # Add pool details if available
+        if res.room_pool_id:
+            try:
+                from roompooling.models import RoomPool, RoomPoolMember
+                pool = RoomPool.objects.get(id=res.room_pool_id)
+                members = RoomPoolMember.objects.filter(pool=pool, status='approved')
+                
+                res_data['pool_details'] = {
+                    'pool_id': str(pool.id),
+                    'pool_title': pool.title,
+                    'creator_name': pool.creator.name,
+                    'members': [
+                        {
+                            'name': m.user.name,
+                            'email': m.user.email,
+                            'share_amount': float(m.share_amount),
+                            'payment_status': m.payment_status,
+                            'is_creator': m.is_creator
+                        }
+                        for m in members
+                    ],
+                    'total_collected': float(sum(m.amount_paid for m in members)),
+                    'visibility': pool.visibility
+                }
+            except Exception:
+                res_data['pool_details'] = None
+        
+        results.append(res_data)
+    
+    return Response(results)

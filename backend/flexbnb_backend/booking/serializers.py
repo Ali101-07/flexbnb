@@ -39,7 +39,8 @@ class ReservationSerializer(serializers.ModelSerializer):
             'id', 'property', 'guest', 'host', 'check_in_date', 
             'check_out_date', 'check_in_time', 'check_out_time',
             'guests_count', 'total_price', 'booking_fee', 'host_earnings',
-            'status', 'special_requests', 'created_at', 'updated_at'
+            'status', 'special_requests', 'created_at', 'updated_at',
+            'booking_type', 'is_room_pool', 'room_pool_id', 'pool_members_count'
         ]
 
 

@@ -15,6 +15,11 @@ class Reservation(models.Model):
         ('completed', 'Completed'),
     ]
     
+    BOOKING_TYPE_CHOICES = [
+        ('individual', 'Individual Booking'),
+        ('room_pool', 'Room Pool Booking'),
+    ]
+    
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     property = models.ForeignKey(Property, related_name='reservations', on_delete=models.CASCADE)
     guest = models.ForeignKey(User, related_name='reservations', on_delete=models.CASCADE)
@@ -32,6 +37,12 @@ class Reservation(models.Model):
     
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     special_requests = models.TextField(blank=True)
+    
+    # Room Pooling Fields
+    booking_type = models.CharField(max_length=20, choices=BOOKING_TYPE_CHOICES, default='individual')
+    is_room_pool = models.BooleanField(default=False)
+    room_pool_id = models.UUIDField(null=True, blank=True)  # Store pool ID for reference
+    pool_members_count = models.IntegerField(default=1)  # Number of members in the pool
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

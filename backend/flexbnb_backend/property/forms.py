@@ -21,4 +21,6 @@ class PropertyForm(ModelForm):
             'country_code',
             'category',
             'image',
+            'allow_room_pooling',
+            'max_pool_members',
         )

@@ -9,6 +9,8 @@ import PaymentModal from '../PaymentModal';
 import { showBookingConfirmation } from '../Notification';
 import { useAuth, useUser } from '@clerk/nextjs';
 import ConfirmationModal from '../ConfirmationModal';
+import Link from 'next/link';
+import { UserGroupIcon, SparklesIcon, CurrencyDollarIcon } from '@heroicons/react/24/outline';
 
 export type Property = {
   id: string;
@@ -18,6 +20,8 @@ export type Property = {
   available_hours_end?: string;
   is_hourly_booking: boolean;
   title: string;
+  allow_room_pooling?: boolean;
+  max_pool_members?: number;
 }
 
 type ReservationSideBarProps = {
@@ -301,6 +305,48 @@ const ReservationSideBar = ({ property }: ReservationSideBarProps) => {
           Reserve
         </button>
       </div>
+      
+      {/* Room Pooling Section */}
+      {property.allow_room_pooling && (
+        <div className="mt-4 mx-2 p-4 bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="p-2 bg-indigo-100 rounded-lg">
+              <UserGroupIcon className="w-5 h-5 text-indigo-600" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-indigo-900">Room Pooling Available</h3>
+              <p className="text-xs text-indigo-600">Share costs with up to {property.max_pool_members || 6} people</p>
+            </div>
+          </div>
+          
+          <div className="space-y-2 mb-4">
+            <div className="flex items-center gap-2 text-sm text-gray-700">
+              <CurrencyDollarIcon className="w-4 h-4 text-emerald-600" />
+              <span>
+                Split from <span className="font-semibold text-emerald-600">
+                  ${Math.ceil(property.price_per_night / (property.max_pool_members || 6))}/person/night
+                </span>
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-gray-700">
+              <SparklesIcon className="w-4 h-4 text-purple-600" />
+              <span>Find compatible roommates</span>
+            </div>
+          </div>
+          
+          <div className="flex flex-col gap-2">
+            <Link
+              href={`/room-pooling?propertyId=${property.id}`}
+              className="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-xl font-semibold text-center transition-all shadow-md hover:shadow-lg"
+            >
+              Create or Join Pool
+            </Link>
+            <p className="text-xs text-center text-gray-500">
+              Save money by sharing with other travelers
+            </p>
+          </div>
+        </div>
+      )}
       <PaymentModal
         isOpen={isPaymentModalOpen}
         onClose={() => setIsPaymentModalOpen(false)}

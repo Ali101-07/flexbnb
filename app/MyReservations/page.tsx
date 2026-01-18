@@ -4,11 +4,24 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useAuth, SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
 import ReviewForm from "../components/Reviews/ReviewForm";
+import Link from "next/link";
 import { 
   CalendarIcon, 
   CheckCircleIcon,
-  StarIcon
+  StarIcon,
+  UserGroupIcon,
+  CurrencyDollarIcon
 } from '@heroicons/react/24/outline';
+
+interface PoolInfo {
+  pool_id: string;
+  pool_title: string;
+  my_share: number;
+  amount_paid: number;
+  payment_status: string;
+  is_creator: boolean;
+  total_members: number;
+}
 
 interface Reservation {
   id: string;
@@ -25,12 +38,20 @@ interface Reservation {
   special_requests: string;
   created_at: string;
   hasReview?: boolean;
+  // Room pooling fields
+  is_room_pool?: boolean;
+  booking_type?: string;
+  room_pool_id?: string;
+  pool_members_count?: number;
+  pool_info?: PoolInfo;
 }
 
 const MyReservationsPage = () => {
   const { getToken } = useAuth();
   const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [poolReservations, setPoolReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'individual' | 'pool'>('individual');
 
   useEffect(() => {
     fetchReservations();
@@ -40,6 +61,8 @@ const MyReservationsPage = () => {
     try {
       setLoading(true);
       const token = await getToken();
+      
+      // Fetch individual reservations
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_HOST}/api/booking/guest-reservations/`, {
         headers: {
           'Authorization': token ? `Bearer ${token}` : '',
@@ -48,14 +71,28 @@ const MyReservationsPage = () => {
         credentials: 'include',
       });
 
-      console.log('Guest reservations response status:', response.status);
       if (response.ok) {
         const data = await response.json();
-        console.log('Guest reservations data:', data);
-        setReservations(data);
+        // Filter individual reservations (not room pool)
+        const individual = data.filter((r: Reservation) => !r.is_room_pool);
+        setReservations(individual);
       } else {
         console.log('Failed to fetch reservations, using mock data');
         setReservations(getMockReservations());
+      }
+      
+      // Fetch pool member reservations
+      const poolResponse = await fetch(`${process.env.NEXT_PUBLIC_API_HOST}/api/booking/pool-member-reservations/`, {
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+      
+      if (poolResponse.ok) {
+        const poolData = await poolResponse.json();
+        setPoolReservations(poolData);
       }
     } catch (error) {
       console.error('Error fetching reservations:', error);
@@ -153,22 +190,79 @@ const MyReservationsPage = () => {
     );
   }
 
+  const currentReservations = activeTab === 'individual' ? reservations : poolReservations;
+
   return (
     <>
       <SignedIn>
         <main className="max-w-[1500px] mx-auto p-6 pt-4">
           <h1 className="mt-6 mb-6 text-2xl font-bold">My Reservations</h1>
           
-          {reservations.length === 0 ? (
+          {/* Tab Navigation */}
+          <div className="flex gap-4 mb-6 border-b border-gray-200">
+            <button
+              onClick={() => setActiveTab('individual')}
+              className={`pb-3 px-4 text-sm font-medium transition-colors relative ${
+                activeTab === 'individual'
+                  ? 'text-blue-600 border-b-2 border-blue-600'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <CalendarIcon className="w-5 h-5" />
+                Individual Bookings
+                {reservations.length > 0 && (
+                  <span className="bg-gray-100 text-gray-700 text-xs px-2 py-0.5 rounded-full">
+                    {reservations.length}
+                  </span>
+                )}
+              </div>
+            </button>
+            <button
+              onClick={() => setActiveTab('pool')}
+              className={`pb-3 px-4 text-sm font-medium transition-colors relative ${
+                activeTab === 'pool'
+                  ? 'text-blue-600 border-b-2 border-blue-600'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <UserGroupIcon className="w-5 h-5" />
+                Pool Bookings
+                {poolReservations.length > 0 && (
+                  <span className="bg-indigo-100 text-indigo-700 text-xs px-2 py-0.5 rounded-full">
+                    {poolReservations.length}
+                  </span>
+                )}
+              </div>
+            </button>
+          </div>
+          
+          {currentReservations.length === 0 ? (
             <div className="text-center py-12">
-              <CalendarIcon className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">No reservations</h3>
-              <p className="mt-1 text-sm text-gray-500">Get started by making your first booking.</p>
+              {activeTab === 'individual' ? (
+                <>
+                  <CalendarIcon className="mx-auto h-12 w-12 text-gray-400" />
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">No individual reservations</h3>
+                  <p className="mt-1 text-sm text-gray-500">Get started by making your first booking.</p>
+                </>
+              ) : (
+                <>
+                  <UserGroupIcon className="mx-auto h-12 w-12 text-gray-400" />
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">No pool bookings</h3>
+                  <p className="mt-1 text-sm text-gray-500">Join a room pool to share costs with others.</p>
+                  <Link href="/room-pooling" className="mt-4 inline-block px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                    Browse Room Pools
+                  </Link>
+                </>
+              )}
             </div>
           ) : (
             <div className="space-y-6">
-              {reservations.map((reservation) => (
-                <div key={reservation.id} className="p-4 m-4 grid grid-cols-1 lg:grid-cols-4 gap-4 shadow-md border border-gray-300 rounded-xl">
+              {currentReservations.map((reservation) => (
+                <div key={reservation.id} className={`p-4 m-4 grid grid-cols-1 lg:grid-cols-4 gap-4 shadow-md border rounded-xl ${
+                  reservation.is_room_pool ? 'border-indigo-200 bg-indigo-50/30' : 'border-gray-300'
+                }`}>
                   <div className="lg:col-span-1">
                     <div className="relative overflow-hidden aspect-square rounded-xl">
                       <Image
@@ -177,12 +271,28 @@ const MyReservationsPage = () => {
                         className="hover:scale-110 object-cover transition h-full w-full"
                         alt={reservation.property.title}
                       />
+                      {reservation.is_room_pool && (
+                        <div className="absolute top-2 left-2 bg-indigo-600 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                          <UserGroupIcon className="w-3 h-3" />
+                          Pool
+                        </div>
+                      )}
                     </div>
                   </div>
                   
                   <div className="lg:col-span-3 space-y-3">
                     <div className="flex items-start justify-between">
-                      <h2 className="text-xl font-semibold">{reservation.property.title}</h2>
+                      <div>
+                        <h2 className="text-xl font-semibold">{reservation.property.title}</h2>
+                        {reservation.pool_info && (
+                          <p className="text-sm text-indigo-600 mt-1">
+                            Pool: {reservation.pool_info.pool_title}
+                            {reservation.pool_info.is_creator && (
+                              <span className="ml-2 bg-indigo-100 text-indigo-800 text-xs px-2 py-0.5 rounded-full">Creator</span>
+                            )}
+                          </p>
+                        )}
+                      </div>
                       <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusBadge(reservation.status)}`}>
                         {reservation.status.charAt(0).toUpperCase() + reservation.status.slice(1)}
                       </span>
@@ -193,9 +303,34 @@ const MyReservationsPage = () => {
                       <p><strong>Check Out:</strong> {formatDate(reservation.check_out_date)}</p>
                       <p><strong>Nights:</strong> {calculateNights(reservation.check_in_date, reservation.check_out_date)}</p>
                       <p><strong>Guests:</strong> {reservation.guests_count}</p>
-                      <p><strong>Total Price:</strong> ${Number(reservation.total_price).toFixed(2)}</p>
+                      {reservation.pool_info ? (
+                        <>
+                          <p><strong>Your Share:</strong> <span className="text-emerald-600 font-semibold">${reservation.pool_info.my_share.toFixed(2)}</span></p>
+                          <p><strong>Pool Members:</strong> {reservation.pool_info.total_members}</p>
+                        </>
+                      ) : (
+                        <p><strong>Total Price:</strong> ${Number(reservation.total_price).toFixed(2)}</p>
+                      )}
                       <p><strong>Booked:</strong> {formatDate(reservation.created_at)}</p>
                     </div>
+                    
+                    {reservation.pool_info && (
+                      <div className="flex items-center gap-4 text-sm bg-white p-3 rounded-lg border border-gray-200">
+                        <div className="flex items-center gap-1">
+                          <CurrencyDollarIcon className="w-4 h-4 text-gray-500" />
+                          <span>Paid: ${reservation.pool_info.amount_paid.toFixed(2)}</span>
+                        </div>
+                        <div className={`px-2 py-1 rounded-full text-xs ${
+                          reservation.pool_info.payment_status === 'paid' 
+                            ? 'bg-green-100 text-green-800' 
+                            : reservation.pool_info.payment_status === 'partial'
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {reservation.pool_info.payment_status.charAt(0).toUpperCase() + reservation.pool_info.payment_status.slice(1)}
+                        </div>
+                      </div>
+                    )}
                     
                     {reservation.special_requests && (
                       <div className="text-sm">
@@ -210,6 +345,15 @@ const MyReservationsPage = () => {
                       >
                         View Property
                       </a>
+                      
+                      {reservation.pool_info && (
+                        <Link
+                          href={`/room-pooling/${reservation.pool_info.pool_id}`}
+                          className="inline-block cursor-pointer py-2 px-4 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg text-sm font-medium transition-colors"
+                        >
+                          View Pool
+                        </Link>
+                      )}
                       
                       {((reservation.status === 'completed' || 
                          (reservation.status === 'approved' && isCheckoutDatePassed(reservation.check_out_date))) 
