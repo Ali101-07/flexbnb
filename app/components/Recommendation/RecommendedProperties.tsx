@@ -9,10 +9,13 @@ interface RecommendedProperty {
     id: string;
     title: string;
     price_per_night: number;
+    price_per_hour?: number;
     image_url: string;
     country: string;
     category: string;
     recommendation_score?: number;
+    is_hourly_booking?: boolean;
+    allow_room_pooling?: boolean;
 }
 
 interface RecommendationResponse {

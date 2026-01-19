@@ -13,6 +13,7 @@ export type PropertyType = {
   is_hourly_booking: boolean;
   available_hours_start?: string;
   available_hours_end?: string;
+  allow_room_pooling?: boolean;
 } 
 const PropertyList=() =>{
   const [properties,setProperties]=useState<PropertyType[]>([]);
