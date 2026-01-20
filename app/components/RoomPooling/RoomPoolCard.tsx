@@ -3,6 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { RoomPool } from './types';
 import {
   UserGroupIcon,
@@ -21,6 +22,8 @@ interface RoomPoolCardProps {
 }
 
 const RoomPoolCard: React.FC<RoomPoolCardProps> = ({ pool, showJoinButton = true, onJoin }) => {
+  const router = useRouter();
+  
   const nights = Math.ceil(
     (new Date(pool.check_out_date).getTime() - new Date(pool.check_in_date).getTime()) /
       (1000 * 60 * 60 * 24)
@@ -57,8 +60,20 @@ const RoomPoolCard: React.FC<RoomPoolCardProps> = ({ pool, showJoinButton = true
     }
   };
 
+  const handleCardClick = () => {
+    router.push(`/room-pooling/${pool.id}`);
+  };
+
+  const handleJoinClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card navigation
+    onJoin?.(pool.id);
+  };
+
   return (
-    <div className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 group">
+    <div 
+      onClick={handleCardClick}
+      className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 group cursor-pointer"
+    >
       {/* Image Section */}
       <div className="relative h-48 overflow-hidden">
         {pool.property_image ? (
@@ -94,11 +109,9 @@ const RoomPoolCard: React.FC<RoomPoolCardProps> = ({ pool, showJoinButton = true
 
       {/* Content Section */}
       <div className="p-5">
-        <Link href={`/room-pooling/${pool.id}`}>
-          <h3 className="text-lg font-semibold text-gray-900 hover:text-indigo-600 transition-colors line-clamp-1">
-            {pool.title}
-          </h3>
-        </Link>
+        <h3 className="text-lg font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors line-clamp-1">
+          {pool.title}
+        </h3>
 
         <p className="text-sm text-gray-600 mt-1 flex items-center gap-1">
           <MapPinIcon className="w-4 h-4 text-gray-400" />
@@ -155,7 +168,7 @@ const RoomPoolCard: React.FC<RoomPoolCardProps> = ({ pool, showJoinButton = true
         {/* Join Button - only show if not already a member */}
         {showJoinButton && pool.status === 'open' && !pool.is_member && (
           <button
-            onClick={() => onJoin?.(pool.id)}
+            onClick={handleJoinClick}
             className="w-full mt-4 py-3 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium rounded-xl hover:shadow-lg hover:from-indigo-700 hover:to-purple-700 transition-all"
           >
             Join Pool
