@@ -263,7 +263,12 @@ class DynamicPricingInsightsView(APIView):
     - Best time to book
     - Price predictions
     - Demand forecasting
+    
+    This endpoint is publicly accessible (no authentication required)
+    as pricing insights help all users make informed booking decisions.
     """
+    authentication_classes = []  # Allow unauthenticated access
+    permission_classes = []      # No permissions required
     
     def get(self, request, property_id=None):
         # Get specific property or location-based insights

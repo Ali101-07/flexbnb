@@ -68,8 +68,22 @@ const CreatePoolModal: React.FC<CreatePoolModalProps> = ({
     if (preselectedProperty) {
       setPropertyId(preselectedProperty.id);
       setSelectedProperty(preselectedProperty);
+      // Reset maxMembers if it exceeds property's limit
+      if (preselectedProperty.max_pool_members && maxMembers > preselectedProperty.max_pool_members) {
+        setMaxMembers(Math.min(4, preselectedProperty.max_pool_members));
+      }
     }
   }, [preselectedProperty]);
+
+  // Reset maxMembers when property changes to respect property's limit
+  useEffect(() => {
+    if (selectedProperty?.max_pool_members) {
+      const propertyMax = selectedProperty.max_pool_members;
+      if (maxMembers > propertyMax) {
+        setMaxMembers(Math.min(4, propertyMax));
+      }
+    }
+  }, [selectedProperty]);
 
   // Calculate total price based on dates and property
   useEffect(() => {
@@ -431,11 +445,16 @@ const CreatePoolModal: React.FC<CreatePoolModalProps> = ({
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <UserGroupIcon className="w-4 h-4 inline mr-1" />
                   Max Members (including you) *
+                  {selectedProperty?.max_pool_members && (
+                    <span className="text-xs text-gray-500 font-normal ml-2">
+                      (Property allows up to {selectedProperty.max_pool_members})
+                    </span>
+                  )}
                 </label>
                 <input
                   type="range"
                   min={2}
-                  max={12}
+                  max={selectedProperty?.max_pool_members || 6}
                   value={maxMembers}
                   onChange={(e) => setMaxMembers(parseInt(e.target.value))}
                   className="w-full accent-indigo-600"
@@ -443,7 +462,7 @@ const CreatePoolModal: React.FC<CreatePoolModalProps> = ({
                 <div className="flex justify-between text-sm text-gray-500 mt-1">
                   <span>2</span>
                   <span className="font-medium text-indigo-600">{maxMembers} members</span>
-                  <span>12</span>
+                  <span>{selectedProperty?.max_pool_members || 6}</span>
                 </div>
               </div>
 
