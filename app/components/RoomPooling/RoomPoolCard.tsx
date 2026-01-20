@@ -152,8 +152,8 @@ const RoomPoolCard: React.FC<RoomPoolCardProps> = ({ pool, showJoinButton = true
           )}
         </div>
 
-        {/* Join Button */}
-        {showJoinButton && pool.status === 'open' && (
+        {/* Join Button - only show if not already a member */}
+        {showJoinButton && pool.status === 'open' && !pool.is_member && (
           <button
             onClick={() => onJoin?.(pool.id)}
             className="w-full mt-4 py-3 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium rounded-xl hover:shadow-lg hover:from-indigo-700 hover:to-purple-700 transition-all"
@@ -162,6 +162,7 @@ const RoomPoolCard: React.FC<RoomPoolCardProps> = ({ pool, showJoinButton = true
           </button>
         )}
 
+        {/* Member badge */}
         {pool.is_member && (
           <div className="mt-4 py-2 px-4 bg-emerald-50 text-emerald-700 font-medium rounded-xl text-center flex items-center justify-center gap-2">
             <CheckBadgeIcon className="w-5 h-5" />
