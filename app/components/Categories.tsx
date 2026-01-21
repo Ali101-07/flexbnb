@@ -16,6 +16,17 @@ const categories = [
   { name: "Camping", icon: "/Camping_Icon.jpg" },
   { name: "Farms", icon: "/Farms_Icon.jpg" },
   { name: "Domes", icon: "/Domes_Icon.jpg" },
+  // Extra discovery categories
+  // Reuse existing icons from /public so images always load
+  { name: "Lakefront", icon: "/BeachFront_Icon.jpg" },
+  { name: "Countryside", icon: "/Farms_Icon.jpg" },
+  { name: "Tiny Homes", icon: "/Rooms_Icon.jpg" },
+  { name: "Castles", icon: "/Castle_Icon.jpg" },
+  { name: "Islands", icon: "/BeachFront_Icon.jpg" },
+  { name: "Boats", icon: "/BeachFront_Icon.jpg" },
+  { name: "Ski Resorts", icon: "/Artic_Icon.jpg" },
+  { name: "Desert", icon: "/Camping_Icon.jpg" },
+  { name: "National Parks", icon: "/Farms_Icon.jpg" },
 ];
 
 const Categories = () => {
