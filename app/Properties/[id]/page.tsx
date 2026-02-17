@@ -212,11 +212,19 @@ const PropertyDetailPage = () => {
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div className="min-w-0 flex-1">
                             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 break-words">{property.title}</h1>
-                            <div className="flex flex-wrap items-center mt-2 text-sm text-gray-600 gap-x-2">
-                                <div className="flex items-center">
-                                    <MapPinIcon className="h-4 w-4 mr-1" />
-                                    <span>{property.country || 'Location'}</span>
-                                </div>
+                            <div className="flex flex-wrap items-center mt-2 text-sm text-gray-600 gap-x-2 gap-y-2">
+                                {(property.country || property.country_code) && (
+                                    <div className="flex items-center">
+                                        <MapPinIcon className="h-4 w-4 mr-1" />
+                                        <span>{property.country || property.country_code}</span>
+                                    </div>
+                                )}
+                                {property.allow_room_pooling && (
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                                        <UserGroupIcon className="h-3 w-3 mr-1" />
+                                        Room Pooling Available
+                                    </span>
+                                )}
                             </div>
                         </div>
                         
